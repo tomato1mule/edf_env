@@ -27,9 +27,13 @@ setup(
         'numpy==1.24.1',
         'scipy==1.10.0',
         'pybullet==3.2.5',
+        'pandas==1.5.2',
         'pyyaml',        # 6.0
         'tqdm',          # 4.64.1
         'jupyter',       # 1.0.0
         'plotly',        # 5.12.0
+        'mypy',
+        'nb_mypy',
+        'types-PyYAML',
     ]
 )

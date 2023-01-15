@@ -1,0 +1,33 @@
+# Cam 0 Config
+- distance: 0.5
+  ypr: [90., -70., 0.]
+  W: 480
+  H: 360
+  up: [0., 0., 1.]
+  up_axis_idx: 2
+  near: 0.01
+  far : 100.
+  fov : 60. 
+  target_pos: null
+# Cam 1 Config
+- distance: 0.5
+  ypr: [225., -70., 0.]
+  W: 480
+  H: 360
+  up: [0., 0., 1.]
+  up_axis_idx: 2
+  near: 0.01
+  far : 100.
+  fov : 60. 
+  target_pos: null
+# Cam 2 Config
+- distance: 0.5
+  ypr: [315, -70, 0.]
+  W: 480
+  H: 360
+  up: [0., 0., 1.]
+  up_axis_idx: 2
+  near: 0.01
+  far : 100.
+  fov : 60. 
+  target_pos: null
