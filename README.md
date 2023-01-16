@@ -1,9 +1,10 @@
 # 1. edf_env
 Pybullet environment for EDF.
 # 2. Installation
-## 2.1 Install ROS2 with conda via robostack
+## 2.1 Install ROS (Noetic) on conda via robostack
 https://robostack.github.io/GettingStarted.html
 https://github.com/RoboStack/ros-humble
+https://github.com/RoboStack/ros-noetic
 ```shell
 # if you don't have mamba yet, install it first (not needed when using mambaforge):
 conda install mamba -c conda-forge
@@ -24,13 +25,24 @@ conda config --env --add channels robostack-humble
 pip install cryptography==38.0.4
 
 # Install the version of ROS you are interested in:
-mamba install ros-humble-desktop  # (or "mamba install ros-noetic-desktop" or "mamba install ros-galactic-desktop")
+#mamba install ros-humble-desktop  # (or "mamba install ros-noetic-desktop" or "mamba install ros-galactic-desktop")
+mamba install ros-noetic-desktop
 
 # optionally, install some compiler packages if you want to e.g. build packages in a colcon_ws:
-mamba install compilers cmake pkg-config make ninja colcon-common-extensions
+mamba install compilers cmake pkg-config make ninja #colcon-common-extensions
 
-# on Linux and osx (but not Windows) for ROS1 you might want to:
+# on linux and osx (but not Windows) you might want to:
 mamba install catkin_tools
+# on Windows, install Visual Studio 2017 or 2019 with C++ support 
+# see https://docs.microsoft.com/en-us/cpp/build/vscpp-step-0-installation?view=msvc-160
+
+# only on linux, if you are having issues finding GL/OpenGL, also do:
+mamba install mesa-libgl-devel-cos7-x86_64 mesa-dri-drivers-cos7-x86_64 libselinux-cos7-x86_64 libxdamage-cos7-x86_64 libxxf86vm-cos7-x86_64 libxext-cos7-x86_64 xorg-libxfixes
+
+# on Windows, install the Visual Studio command prompt via Conda:
+# mamba install vs2019_win-64
+
+# note that in this case, you should also install the necessary dependencies with conda/mamba, if possible
 
 # reload environment to activate required scripts before running anything
 # on Windows, please restart the Anaconda Prompt / Command Prompt!
@@ -45,13 +57,11 @@ rosdep update
 
 # 2.2 Install Moveit2
 ```shell
-mamba install ros-humble-moveit
-# mamba install colcon-mixin
-# mamba install vcstool
+mamba install ros-noetic-moveit
 ```
 
-# 2.3 Install Moveit2 Tutorial
+# 2.3 Configure catkin
 ```shell
-mamba install colcon-mixin
-mamba install vcstool
+cd catkin_ws
+catkin_make
 ```
