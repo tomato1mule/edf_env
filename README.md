@@ -65,3 +65,8 @@ mamba install ros-noetic-moveit
 cd catkin_ws
 catkin_make
 ```
+
+# 2.4 Install dependencies
+```shell
+pip install -e .
+```

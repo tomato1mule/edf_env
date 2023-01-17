@@ -24,9 +24,9 @@ setup(
     packages=find_packages(where="src"),
     python_requires=">=3.9",
     install_requires=[
-        'numpy==1.24.1',
+        'numpy==1.23.5',
         'scipy==1.10.0',
-        'pybullet==3.2.5',
+        'pybullet==3.2.0',
         'pandas==1.5.2',
         'open3d==0.16.0',
         'pyyaml',        # 6.0
