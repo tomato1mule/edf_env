@@ -80,10 +80,10 @@ class BulletEnv():
 
 class UR5Env(BulletEnv):
     def __init__(self, 
-                 env_config_path: Optional[str] = None, 
-                 scene_cam_config_path: Optional[str] = None, 
-                 grasp_cam_config_path: Optional[str] = None, 
-                 robot_path: Optional[str] = None, 
+                 env_config_path: str = os.path.join(edf_env.ROOT_DIR, 'config/env_config.yaml'), 
+                 scene_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/scene_camera_config.yaml'), 
+                 grasp_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/grasp_camera_config.yaml'), 
+                 robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5.urdf'), 
                  use_gui: bool = True, 
                  sim_freq: float = 1000):
         """Pybullet environment with UR5 Robot
@@ -105,24 +105,22 @@ class UR5Env(BulletEnv):
 
         """
         super().__init__(use_gui=use_gui, sim_freq=sim_freq)
-
-        if env_config_path is None:
-            env_config_path = os.path.join(edf_env.ROOT_DIR, 'config/env_config.yaml')
+        
         self.load_env_config(config_path=env_config_path)
-
-        ### Temporary ###
+        self.load_robot(urdf_path=robot_path)
+        ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
-            scene_cam_config_path = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/scene_camera_config.yaml')
-        self.scene_cam_configs = self.load_cam_config(cam_config_path=scene_cam_config_path)
+            self.scene_cam_configs = None
+        else:
+            self.scene_cam_configs = self.load_cam_config(cam_config_path=scene_cam_config_path)
 
         if grasp_cam_config_path is None:
-            grasp_cam_config_path = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/grasp_camera_config.yaml')
-        self.grasp_cam_configs = self.load_cam_config(cam_config_path=grasp_cam_config_path)
-        #################
+            self.grasp_cam_configs = None
+        else:
+            self.grasp_cam_configs = self.load_cam_config(cam_config_path=grasp_cam_config_path)
+        #########################################################################################
 
-        if robot_path is None:
-            robot_path = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5.urdf')
-        self.load_robot(urdf_path=robot_path)
+
         
     def load_env_config(self, config_path: str):
         """Loads environment config from yaml file path."""
@@ -153,6 +151,8 @@ class UR5Env(BulletEnv):
 
         ### Temporary ###
     def observe_scene(self) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray], list[CamData]]:
+        assert self.scene_cam_configs, "Scene camera configuration is not assigned."
+
         cam_data_list: list[CamData] = self.observe_cams(cam_configs=self.scene_cam_configs, target_pos=self.scene_center)
         pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.scene_ranges)
 
