@@ -120,8 +120,7 @@ class UR5Env(BulletEnv):
             self.grasp_cam_configs = self.load_cam_config(cam_config_path=grasp_cam_config_path)
         #########################################################################################
 
-
-        
+       
     def load_env_config(self, config_path: str):
         """Loads environment config from yaml file path."""
         config: dict[str, Any] = load_yaml(config_path)
@@ -141,20 +140,36 @@ class UR5Env(BulletEnv):
         if self.robot_base_pose_init['orn'] is None:
             self.robot_base_pose_init['orn'] = np.array([0.0, 0.0, 0.0, 1.0])
 
-
-
     def load_robot(self, urdf_path: str):
         """Loads list of pybullet camera configs from yaml file path."""
         p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'])
 
+    def observe_scene(self, stride: Union[np.ndarray, list, tuple] = (1,1)) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray], list[CamData]]:
+        """Get point cloud and camera observation data of the scene.
 
+        Returns:
+            1) point cloud 3d-coordinate
+            2) point cloud color
+            3) point cloud segmentation (optional)
+            4) list of raw camera data (See See :func:`get_pybullet_cam_data` for details)
 
-        ### Temporary ###
-    def observe_scene(self) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray], list[CamData]]:
+            Shape::
+
+                - coord (np.ndarray): (N_points, 3)
+                - color (np.ndarray): (N_points, 3)
+                - seg (np.ndarray[int] or None): (N_points)
+
+        Args:
+            stride: (np.ndarray, list or tuple): Stride of sampling points from images. (1,1) means dense sampling.
+
+            Shape::
+
+                - stride: (2,) 
+
+        """
         assert self.scene_cam_configs, "Scene camera configuration is not assigned."
 
         cam_data_list: list[CamData] = self.observe_cams(cam_configs=self.scene_cam_configs, target_pos=self.scene_center)
-        pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.scene_ranges)
+        pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.scene_ranges, stride=stride)
 
         return pc_coord, pc_color, pc_seg, cam_data_list
-        #################
