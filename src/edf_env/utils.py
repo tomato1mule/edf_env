@@ -1,8 +1,9 @@
 import sys, os
-from typing import Union, Optional, Type, TypedDict
+from typing import Union, Optional, Type, TypedDict, Any
 
 import pybullet as p
 import numpy as np
+import yaml
 
 
 
@@ -210,3 +211,9 @@ class HideOutput(object):
         sys.stdout.flush()
         os.dup2(self._oldstdout_fno, self.fd)
         os.close(self._oldstdout_fno) # Added
+
+def load_yaml(file_path: str) -> Any:
+    """Loads yaml file from path."""
+    with open(file_path) as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
+    return config
