@@ -22,7 +22,7 @@ setup(
     ],
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    python_requires=">=3.9",
+    python_requires="<3.9",
     install_requires=[
         'numpy==1.23.5',
         'scipy==1.10.0',

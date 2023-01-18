@@ -1,17 +1,27 @@
 # 1. edf_env
 Pybullet environment for EDF.
 # 2. Installation
-## 2.1 Install ROS (Noetic) on conda via robostack
-https://robostack.github.io/GettingStarted.html
-https://github.com/RoboStack/ros-humble
-https://github.com/RoboStack/ros-noetic
+
+# 2.1 Setup conda env
 ```shell
 # if you don't have mamba yet, install it first (not needed when using mambaforge):
 conda install mamba -c conda-forge
 
 # now create a new environment
-mamba create -n edf_env python=3.9
+mamba create -n edf_env python=3.8
 conda activate edf_env
+
+# Install dependencies
+
+pip install -e .
+```
+
+## 2.2 Install ROS (Noetic) on conda via robostack
+https://robostack.github.io/GettingStarted.html
+https://github.com/RoboStack/ros-humble
+https://github.com/RoboStack/ros-noetic
+```shell
+
 
 # this adds the conda-forge channel to the new created environment configuration 
 conda config --env --add channels conda-forge
@@ -57,7 +67,7 @@ rosdep update
 
 # 2.2 Install Moveit2
 ```shell
-mamba install ros-noetic-moveit
+mamba install ros-noetic-moveit=1.1.0
 ```
 
 # 2.3 Configure catkin
@@ -66,7 +76,7 @@ cd catkin_ws
 catkin_make
 ```
 
-# 2.4 Install dependencies
+# 2.5 
 ```shell
-pip install -e .
+source {PATH/TO}/edf_env/catkin_ws/devel/setup.bash
 ```
