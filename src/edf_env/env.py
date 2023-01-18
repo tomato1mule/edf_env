@@ -111,7 +111,8 @@ class UR5Env(BulletEnv):
 
         ############ Load robot ################################################
         self.robot_id: int = self.load_robot(urdf_path=robot_path)
-        (self.robot_joint_name_list, self.robot_joint_name_dict) = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
+        self.robot_joint_name_list, self.robot_joint_name_dict, self.robot_joint_type_list = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
+        self.n_joints = len(self.robot_joint_name_list)
 
         ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
