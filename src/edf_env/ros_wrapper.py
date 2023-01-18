@@ -1,3 +1,5 @@
+import threading
+
 import rospy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
@@ -14,12 +16,17 @@ class UR5EnvRosWrapper():
 
         self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False)
         rospy.init_node('edf_env', anonymous=True)
+        
+        b = threading.Thread(name='background', target=self.background)
+        b.start()
 
+
+
+    def background(self):
         rate = rospy.Rate(10) # 10hz
         while not rospy.is_shutdown():
             self.publish_joint_info()
             rate.sleep()
-
 
     def publish_joint_info(self):
         pos, vel = self.env.get_joint_states(list(range(self.env.n_joints)))
