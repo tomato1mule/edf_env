@@ -1,6 +1,6 @@
 import time
 import os, sys
-from typing import Union, Optional, Type, TypedDict, Any
+from typing import Union, Optional, Type, TypedDict, Any, List, Dict, Tuple
 
 import numpy as np
 import pybullet as p
@@ -49,12 +49,12 @@ class BulletEnv():
 
         p.disconnect()
 
-    def load_cam_config(self, cam_config_path: str) -> list[CamConfig]:
+    def load_cam_config(self, cam_config_path: str) -> List[CamConfig]:
         """Loads list of pybullet camera configs from yaml file path."""
-        cam_configs: list[CamConfig] = load_yaml(cam_config_path)
+        cam_configs: List[CamConfig] = load_yaml(cam_config_path)
         return cam_configs
 
-    def observe_cams(self, cam_configs: list[CamConfig], target_pos: Optional[np.ndarray] = None) -> list[CamData]:
+    def observe_cams(self, cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] = None) -> List[CamData]:
         """Observes multiple pybullet virtual camera data from list of camera configurations.
         If target_pos is specified, all the cameras will look at the same fixation point in the specificed target position.
 
@@ -123,9 +123,9 @@ class UR5Env(BulletEnv):
        
     def load_env_config(self, config_path: str):
         """Loads environment config from yaml file path."""
-        config: dict[str, Any] = load_yaml(config_path)
+        config: Dict[str, Any] = load_yaml(config_path)
             
-        scene_config: dict[str, Any] = config['scene_config']
+        scene_config: Dict[str, Any] = config['scene_config']
         self.scene_ranges: np.ndarray = np.array(scene_config['scene_ranges']) # [[x_min, x_max], [y_min, y_max], [z_min, z_max]];  Shape: (3,2)
         self.scene_center: np.ndarray = np.array(scene_config['scene_center']) # [xc,yc,zc]: Shape: (3,)
         if scene_config['relative_range'] is True:
@@ -133,8 +133,8 @@ class UR5Env(BulletEnv):
         else:
             raise NotImplementedError
 
-        robot_config: dict[str, Any] = config['robot_config']
-        self.robot_base_pose_init: dict[str, Optional[np.ndarray]] = robot_config['robot_base_pose_init']
+        robot_config: Dict[str, Any] = config['robot_config']
+        self.robot_base_pose_init: Dict[str, Optional[np.ndarray]] = robot_config['robot_base_pose_init']
         if self.robot_base_pose_init['pos'] is None:
             self.robot_base_pose_init['pos'] = np.array([0.0, 0.0, 0.0])
         if self.robot_base_pose_init['orn'] is None:
@@ -144,7 +144,7 @@ class UR5Env(BulletEnv):
         """Loads list of pybullet camera configs from yaml file path."""
         p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'])
 
-    def observe_scene(self, stride: Union[np.ndarray, list, tuple] = (1,1)) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray], list[CamData]]:
+    def observe_scene(self, stride: Union[np.ndarray, list, tuple] = (1,1)) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], List[CamData]]:
         """Get point cloud and camera observation data of the scene.
 
         Returns:
@@ -169,7 +169,7 @@ class UR5Env(BulletEnv):
         """
         assert self.scene_cam_configs, "Scene camera configuration is not assigned."
 
-        cam_data_list: list[CamData] = self.observe_cams(cam_configs=self.scene_cam_configs, target_pos=self.scene_center)
+        cam_data_list: List[CamData] = self.observe_cams(cam_configs=self.scene_cam_configs, target_pos=self.scene_center)
         pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.scene_ranges, stride=stride)
 
         return pc_coord, pc_color, pc_seg, cam_data_list

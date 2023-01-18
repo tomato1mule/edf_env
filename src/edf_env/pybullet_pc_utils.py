@@ -1,4 +1,4 @@
-from typing import Union, Optional, Type, TypedDict
+from typing import Union, Optional, Type, TypedDict, List, Dict, Tuple
 
 import numpy as np
 
@@ -101,7 +101,7 @@ def get_inrange_indices(pos: np.ndarray, ranges: np.ndarray) -> np.ndarray:
     return (((pos[:,0] > xlim[0]) * (pos[:,0] < xlim[1])) * ((pos[:,1] > ylim[0]) * (pos[:,1] < ylim[1])) * ((pos[:,2] > zlim[0]) * (pos[:,2] < zlim[1]))).nonzero()[0]     # Only the points inside the given range is returned.
 
 
-def rgbd_to_pc(cam_data: CamData, pix_coord_WH: np.ndarray, ranges: Optional[np.ndarray] = None) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+def rgbd_to_pc(cam_data: CamData, pix_coord_WH: np.ndarray, ranges: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
     """Get the point cloud from single Pybullet camera data.
        The points are ampled from specified pixels (pix_coord_WH).
 
@@ -144,7 +144,7 @@ def rgbd_to_pc(cam_data: CamData, pix_coord_WH: np.ndarray, ranges: Optional[np.
 
     return coord, color, seg
 
-def pb_cams_to_pc(cam_data_list: list[CamData], ranges: Optional[Union[np.ndarray, list, tuple]] = None, stride: Union[np.ndarray, list, tuple] = (1,1)) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+def pb_cams_to_pc(cam_data_list: List[CamData], ranges: Optional[Union[np.ndarray, list, tuple]] = None, stride: Union[np.ndarray, list, tuple] = (1,1)) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
     """Get point cloud from multiple Pybullet cam data.
 
     Returns:
@@ -157,7 +157,7 @@ def pb_cams_to_pc(cam_data_list: list[CamData], ranges: Optional[Union[np.ndarra
             - seg (np.ndarray[int] or None): (N_points)
 
     Args:
-        cam_data_list (list[CamData]): List of camera data. See :func:`get_pybullet_cam_data` for details as to individual camera data.
+        cam_data_list (List[CamData]): List of camera data. See :func:`get_pybullet_cam_data` for details as to individual camera data.
         ranges: (np.ndarray, list, tuple or None): X,Y,Z box ranges of the point cloud. Any point outside this range would be discarded.
         stride: (np.ndarray, list or tuple): Stride of sampling points from images. (1,1) means dense sampling.
 

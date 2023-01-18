@@ -1,5 +1,5 @@
 import sys, os
-from typing import Union, Optional, Type, TypedDict, Any
+from typing import Union, Optional, Type, TypedDict, Any, List, Dict
 
 import pybullet as p
 import numpy as np
@@ -13,10 +13,10 @@ import yaml
 
 class CamConfig(TypedDict):
     distance: float
-    ypr: list[float]
+    ypr: List[float]
     W: int
     H: int
-    up: list[float]
+    up: List[float]
     up_axis_idx: int
     near: float
     far : float
@@ -90,7 +90,7 @@ def get_pybullet_cam_data(cam_config: CamConfig, physicsClientId: int = 0) -> Ca
     return cam_data
 
 
-def observe_cams(cam_configs: list[CamConfig], target_pos: Optional[np.ndarray] = None, physicsClientId: int = 0) -> list[CamData]:
+def observe_cams(cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] = None, physicsClientId: int = 0) -> List[CamData]:
     """Observes multiple pybullet virtual camera data from list of camera configurations.
     If target_pos is specified, all the cameras will look at the same fixation point in the specificed target position.
 
@@ -109,7 +109,7 @@ def observe_cams(cam_configs: list[CamConfig], target_pos: Optional[np.ndarray] 
             
     """
 
-    outputs: list[CamData] = []
+    outputs: List[CamData] = []
     for n, config in enumerate(cam_configs):
         config = config.copy()
         if target_pos is not None:
@@ -133,7 +133,7 @@ def observe_cams(cam_configs: list[CamConfig], target_pos: Optional[np.ndarray] 
 
 # code borrowed from cvshah:   https://github.com/bulletphysics/bullet3/discussions/3867
 
-def axiscreator(bodyId: int, linkId: int = -1, offset: Union[list[float], np.ndarray] = [0, 0, 0], physicsClientId: int = 0) -> list[int]:
+def axiscreator(bodyId: int, linkId: int = -1, offset: Union[List[float], np.ndarray] = [0, 0, 0], physicsClientId: int = 0) -> List[int]:
     print(f'axis creator at bodyId = {bodyId} and linkId = {linkId} as XYZ->RGB || offset: {offset}')
     offset = np.array(offset)
 
