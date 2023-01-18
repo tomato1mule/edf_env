@@ -1,5 +1,5 @@
 import sys, os
-from typing import Union, Optional, Type, TypedDict, Any, List, Dict
+from typing import Union, Optional, Type, TypedDict, Any, List, Dict, Tuple
 
 import pybullet as p
 import numpy as np
@@ -217,3 +217,18 @@ def load_yaml(file_path: str) -> Any:
     with open(file_path) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
     return config
+
+##################################################################################
+###################################### Robot #####################################
+##################################################################################
+
+def load_joints_info(body_id: int, physicsClientId: int = 0) -> Tuple[List[str], Dict[int, str]]:
+    """docstring TODO"""
+    joint_name_list = []
+    joint_name_dict = {}
+    for joint_id in range(p.getNumJoints(bodyUniqueId = body_id, physicsClientId=physicsClientId)):
+        joint_name = (p.getJointInfo(bodyUniqueId = body_id, jointIndex = joint_id)[1]).decode('utf-8')
+        joint_name_list.append(joint_name)
+        joint_name_dict[joint_id] = joint_name
+
+    return joint_name_list, joint_name_dict

@@ -9,8 +9,9 @@ from scipy.spatial.transform import Rotation
 import yaml
 
 import edf_env
-from edf_env.utils import HideOutput, observe_cams, CamData, CamConfig, load_yaml
+from edf_env.utils import HideOutput, observe_cams, CamData, CamConfig, load_yaml, load_joints_info
 from edf_env.pybullet_pc_utils import pb_cams_to_pc
+
 
 
 
@@ -107,7 +108,11 @@ class UR5Env(BulletEnv):
         super().__init__(use_gui=use_gui, sim_freq=sim_freq)
         
         self.load_env_config(config_path=env_config_path)
-        self.load_robot(urdf_path=robot_path)
+
+        ############ Load robot ################################################
+        self.robot_id: int = self.load_robot(urdf_path=robot_path)
+        (self.robot_joint_name_list, self.robot_joint_name_dict) = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
+
         ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
             self.scene_cam_configs = None
@@ -140,9 +145,11 @@ class UR5Env(BulletEnv):
         if self.robot_base_pose_init['orn'] is None:
             self.robot_base_pose_init['orn'] = np.array([0.0, 0.0, 0.0, 1.0])
 
-    def load_robot(self, urdf_path: str):
+    def load_robot(self, urdf_path: str) -> int:
         """Loads list of pybullet camera configs from yaml file path."""
-        p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'])
+        robot_id = p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'])
+        return robot_id
+
 
     def observe_scene(self, stride: Union[np.ndarray, list, tuple] = (1,1)) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], List[CamData]]:
         """Get point cloud and camera observation data of the scene.
@@ -173,3 +180,15 @@ class UR5Env(BulletEnv):
         pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.scene_ranges, stride=stride)
 
         return pc_coord, pc_color, pc_seg, cam_data_list
+
+    def get_joint_states(self, joint_ids: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+        """Docstring TODO"""
+        states = p.getJointStates(bodyUniqueId = self.robot_id, jointIndices=joint_ids)
+        pos = np.array([s[0] for s in states]) # Shape: (N_joints,)
+        vel = np.array([s[1] for s in states]) # Shape: (N_joints,)
+        # force = np.stack([np.array(s[2]) for s in states], axis=-2) # list of [Fx, Fy, Fz, Mx, My, Mz]  =>  Shape: (N_joints, 6)
+        # applied_torque = np.array([s[3] for s in states])           # Shape: (N_joints,)
+
+        return pos, vel
+
+

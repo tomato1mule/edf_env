@@ -30,7 +30,7 @@ conda config --env --add channels robostack
 conda config --env --add channels robostack-experimental
 conda config --env --add channels robostack-humble
 
-# There is a bug with cryptography==39.0.0, so please downgrade it.
+# There is a bug with cryptography==39.0.0, so please downgrade it if you face OpenSSL related issues.
 # https://stackoverflow.com/questions/74981558/error-updating-python3-pip-attributeerror-module-lib-has-no-attribute-openss
 pip install cryptography==38.0.4
 
@@ -68,6 +68,7 @@ rosdep update
 # 2.2 Install Moveit2
 ```shell
 mamba install ros-noetic-moveit=1.1.0
+mamba install ros-noetic-moveit-ros-perception=1.1.0
 ```
 
 # 2.3 Configure catkin
