@@ -114,6 +114,11 @@ class UR5Env(BulletEnv):
         self.robot_joint_name_list, self.robot_joint_name_dict, self.robot_joint_type_list = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
         self.n_joints = len(self.robot_joint_name_list)
 
+        self.movable_joints_id = []
+        for id, joint_type in enumerate(self.robot_joint_type_list):
+            if joint_type != 'JOINT_FIXED':
+                self.movable_joints_id.append(id)
+
         ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
             self.scene_cam_configs = None

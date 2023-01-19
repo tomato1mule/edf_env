@@ -9,10 +9,6 @@ from edf_env.env import UR5Env
 class UR5EnvRosWrapper():
     def __init__(self, env: UR5Env):
         self.env = env
-        self.movable_joints_id = []
-        for id, joint_type in enumerate(self.env.robot_joint_type_list):
-            if joint_type != 'JOINT_FIXED':
-                self.movable_joints_id.append(id)
 
         self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False, queue_size=10)
         rospy.init_node('edf_env', anonymous=True)
@@ -54,7 +50,7 @@ class UR5EnvRosWrapper():
         #     self.joint_pub.publish(msg)
         msg = JointState()
         msg.header = header
-        for id in self.movable_joints_id:
+        for id in self.env.movable_joints_id:
             msg.name.append(self.env.robot_joint_name_list[id])
             msg.position.append(pos[id])
             msg.velocity.append(vel[id])
