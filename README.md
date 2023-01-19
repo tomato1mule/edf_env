@@ -69,6 +69,8 @@ rosdep update
 ```shell
 mamba install ros-noetic-moveit=1.1.0
 mamba install ros-noetic-moveit-ros-perception=1.1.0
+mamba install ros-noetic-ros-controllers=0.18.1
+mamba install ros-noetic-ros-control=0.19.4
 ```
 
 # 2.3 Configure catkin
