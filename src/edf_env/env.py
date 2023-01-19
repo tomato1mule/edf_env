@@ -112,11 +112,17 @@ class UR5Env(BulletEnv):
         ############ Load robot ################################################
         self.robot_id: int = self.load_robot(urdf_path=robot_path)
         self.robot_joint_dict, self.robot_joint_type_dict, self.n_joints = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId, movable_only = True)
-        self.robot_joint_ids = []
+
+        self.robot_joint_ids = []                    # Idx: Movable joint idx (0~5) || Val: Pybullet jointId (0~27)
         for k,v in self.robot_joint_dict.items():
             if type(k) == int:
                 self.robot_joint_ids.append(k)
         self.robot_joint_ids.sort()
+
+        self._robot_movable_joint_idx_dict: Dict[str, int] = {} # Key: Joint name || Val: Movable joint idx (0~5)         **Note that Movable joint idx (0~5) is different from Pybullet jointId (0~27)
+        for n, id in enumerate(self.robot_joint_ids):
+            self._robot_movable_joint_idx_dict[self.robot_joint_dict[id]] = n
+        
 
         ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
@@ -152,7 +158,7 @@ class UR5Env(BulletEnv):
 
     def load_robot(self, urdf_path: str) -> int:
         """Loads list of pybullet camera configs from yaml file path."""
-        robot_id = p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'])
+        robot_id = p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'], useFixedBase = True)
         return robot_id
 
 
@@ -203,3 +209,32 @@ class UR5Env(BulletEnv):
 
     def step(self):
         p.stepSimulation(physicsClientId = self.physicsClientId)
+
+    def control_target_joint_state(self, target_pos: List[float], target_vel: List[float], target_duration: float, target_joint_names: List[str]) -> bool:
+        """Docstring TODO"""
+        target_duration = 0.8 * target_duration
+        target_steps = int(target_duration * self.sim_freq)
+
+        current_pos, current_vel = self.get_joint_states() # Already sorted
+        target_pos = [target_pos[self._robot_movable_joint_idx_dict[name]] for name in target_joint_names]
+        target_vel = [target_vel[self._robot_movable_joint_idx_dict[name]] for name in target_joint_names]
+        target_pos, target_vel = np.array(target_pos), np.array(target_vel)
+
+        for step in range(target_steps):
+            r = step / target_steps
+            pos = r * (target_pos - current_pos) + current_pos
+            vel = r * (target_vel - current_vel) + current_vel
+
+            force = None
+            if force is None:
+                p.setJointMotorControlArray(bodyUniqueId = self.robot_id,
+                                            jointIndices = self.robot_joint_ids,
+                                            controlMode = p.POSITION_CONTROL,
+                                            targetPositions = pos,
+                                            #targetVelocities = vel,
+                                            physicsClientId=self.physicsClientId)
+            else:
+                raise NotImplementedError
+            self.step()
+
+        return True

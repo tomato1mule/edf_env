@@ -20,8 +20,8 @@ class UR5EnvRosWrapper():
         self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False, queue_size=10)
         self.arm_ctrl_AS_name = 'arm_controller/follow_joint_trajectory'
         self.arm_ctrl_AS = actionlib.SimpleActionServer(self.arm_ctrl_AS_name, FollowJointTrajectoryAction,
-                                                              execute_cb = self.execute_cb, auto_start = False)
-        rospy.init_node('edf_env', anonymous=True)
+                                                              execute_cb = self.execute_cb, auto_start = False)                                                           
+        rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
 
 
@@ -66,10 +66,13 @@ class UR5EnvRosWrapper():
         path_tolerance: JointTolerance = goal.path_tolerance
         goal_tolerance: JointTolerance = goal.goal_tolerance
         duration: Duration = goal.goal_time_tolerance
-        r = rospy.Rate(1)
+        joint_names: list[str] = trajectory.joint_names
 
+
+        #r = rospy.Rate(10)
         success = True
-        for i in range(2):
+        target_time_from_start: float = 0.
+        for point in trajectory.points:
             # check that preempt has not been requested by the client
             if self.arm_ctrl_AS.is_preempt_requested():
                 rospy.logwarn(f"{self.arm_ctrl_AS_name}: Preempted")
@@ -77,17 +80,24 @@ class UR5EnvRosWrapper():
                 success = False
                 break
 
+            target_pos: list[float] = point.positions
+            target_vel: list[float] = point.velocities
+            target_acc: list[float] = point.accelerations
+            target_effort: list[float] = point.effort
+            target_duration = point.time_from_start.to_sec() - target_time_from_start
+            target_time_from_start: float = point.time_from_start.to_sec()
+
+            self.env.control_target_joint_state(target_pos=target_pos, target_vel=target_vel, target_duration=target_duration, target_joint_names=joint_names)
+
             # publish the feedback
             header = Header()
             header.stamp = rospy.Time.now()
             feedback = FollowJointTrajectoryFeedback()
             feedback.header = header
             self.arm_ctrl_AS.publish_feedback(feedback)
-            r.sleep()
+            #r.sleep()
 
-        rospy.logerr(len(trajectory.joint_names))
-        rospy.logerr(type(trajectory.joint_names))
-        rospy.logerr(len(trajectory.points))
+
 
         if success:
             result = FollowJointTrajectoryResult()
