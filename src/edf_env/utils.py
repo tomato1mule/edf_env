@@ -222,21 +222,25 @@ def load_yaml(file_path: str) -> Any:
 ###################################### Robot #####################################
 ##################################################################################
 
-def load_joints_info(body_id: int, physicsClientId: int = 0) -> Tuple[List[str], Dict[int, str], List[str]]:
+def load_joints_info(body_id: int, physicsClientId: int = 0, movable_only: bool = True) -> Tuple[Dict[Union[str, int], Union[str, int]], Dict[Union[str, int], str], int]:
     """docstring TODO"""
-    joint_name_list = []
-    joint_name_dict = {}
-    joint_type_list = []
+    joint_dict = {}
+    joint_type_dict = {}
     jointtype_enum = ('JOINT_REVOLUTE', 'JOINT_PRISMATIC', 'JOINT_SPHERICAL', 'JOINT_PLANAR', 'JOINT_FIXED')
 
-    for joint_id in range(p.getNumJoints(bodyUniqueId = body_id, physicsClientId=physicsClientId)):
+    n_joints: int = p.getNumJoints(bodyUniqueId = body_id, physicsClientId=physicsClientId)
+    for joint_id in range(n_joints):
         joint_info = p.getJointInfo(bodyUniqueId = body_id, jointIndex = joint_id)
         joint_type = jointtype_enum[joint_info[2]]
-        joint_type_list.append(joint_type)
-
         joint_name = (joint_info[1]).decode('utf-8')
-        joint_name_list.append(joint_name)
-        joint_name_dict[joint_id] = joint_name
 
-    return joint_name_list, joint_name_dict, joint_type_list
+        if movable_only is True and joint_type == 'JOINT_FIXED':
+            continue
+
+        joint_dict[joint_id] = joint_name
+        joint_type_dict[joint_id] = joint_type
+        joint_dict[joint_name] = joint_id
+        joint_type_dict[joint_name] = joint_type
+
+    return joint_dict, joint_type_dict, n_joints
 

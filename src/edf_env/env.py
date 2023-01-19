@@ -111,13 +111,12 @@ class UR5Env(BulletEnv):
 
         ############ Load robot ################################################
         self.robot_id: int = self.load_robot(urdf_path=robot_path)
-        self.robot_joint_name_list, self.robot_joint_name_dict, self.robot_joint_type_list = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
-        self.n_joints = len(self.robot_joint_name_list)
-
-        self.movable_joints_id = []
-        for id, joint_type in enumerate(self.robot_joint_type_list):
-            if joint_type != 'JOINT_FIXED':
-                self.movable_joints_id.append(id)
+        self.robot_joint_dict, self.robot_joint_type_dict, self.n_joints = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId, movable_only = True)
+        self.robot_joint_ids = []
+        for k,v in self.robot_joint_dict.items():
+            if type(k) == int:
+                self.robot_joint_ids.append(k)
+        self.robot_joint_ids.sort()
 
         ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
@@ -187,7 +186,7 @@ class UR5Env(BulletEnv):
 
         return pc_coord, pc_color, pc_seg, cam_data_list
 
-    def get_joint_states(self, joint_ids: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_joint_states_from_id_list(self, joint_ids: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """Docstring TODO"""
         states = p.getJointStates(bodyUniqueId = self.robot_id, jointIndices=joint_ids)
         pos = np.array([s[0] for s in states]) # Shape: (N_joints,)
@@ -197,4 +196,10 @@ class UR5Env(BulletEnv):
 
         return pos, vel
 
+    def get_joint_states(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Docstring TODO"""
+        pos, vel = self._get_joint_states_from_id_list(joint_ids=self.robot_joint_ids)
+        return pos, vel
 
+    def step(self):
+        p.stepSimulation(physicsClientId = self.physicsClientId)

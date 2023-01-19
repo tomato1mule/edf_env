@@ -48,28 +48,20 @@ class UR5EnvRosWrapper():
         
 
     def publish_joint_info(self):
-        pos, vel = self.env.get_joint_states(list(range(self.env.n_joints)))
+        pos, vel = self.env.get_joint_states()
 
         header = Header()
         header.stamp = rospy.Time.now()
 
-        # for id in self.movable_joints_id:
-        #     msg = JointState()
-        #     msg.header = header
-        #     msg.name = self.env.robot_joint_name_list[id]
-        #     msg.position = [pos[id]]
-        #     msg.velocity = [vel[id]]
-        #     self.joint_pub.publish(msg)
         msg = JointState()
         msg.header = header
-        for id in self.env.movable_joints_id:
-            msg.name.append(self.env.robot_joint_name_list[id])
-            msg.position.append(pos[id])
-            msg.velocity.append(vel[id])
+        for n, id in enumerate(self.env.robot_joint_ids):
+            msg.name.append(self.env.robot_joint_dict[id])
+            msg.position.append(pos[n])
+            msg.velocity.append(vel[n])
         self.joint_pub.publish(msg)
 
     def execute_cb(self, goal):
-        rospy.logerr(f"CB Acted")
         trajectory: JointTrajectory = goal.trajectory
         path_tolerance: JointTolerance = goal.path_tolerance
         goal_tolerance: JointTolerance = goal.goal_tolerance
@@ -92,6 +84,10 @@ class UR5EnvRosWrapper():
             feedback.header = header
             self.arm_ctrl_AS.publish_feedback(feedback)
             r.sleep()
+
+        rospy.logerr(len(trajectory.joint_names))
+        rospy.logerr(type(trajectory.joint_names))
+        rospy.logerr(len(trajectory.points))
 
         if success:
             result = FollowJointTrajectoryResult()
