@@ -14,19 +14,30 @@ class UR5EnvRosWrapper():
             if joint_type != 'JOINT_FIXED':
                 self.movable_joints_id.append(id)
 
-        self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False)
+        self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False, queue_size=10)
         rospy.init_node('edf_env', anonymous=True)
         
+        self.threads=[]
         b = threading.Thread(name='background', target=self.background)
-        b.start()
+        self.threads.append(b)
 
+        for thread in self.threads:
+            thread.start()
+
+
+    def close(self):
+        self.env.close()
+        for thread in self.threads:
+            thread.terminate()
 
 
     def background(self):
+        # TODO:  https://stackoverflow.com/questions/50907224/not-able-to-terminate-the-process-in-multiprocessing-python-linux
         rate = rospy.Rate(10) # 10hz
         while not rospy.is_shutdown():
             self.publish_joint_info()
             rate.sleep()
+        
 
     def publish_joint_info(self):
         pos, vel = self.env.get_joint_states(list(range(self.env.n_joints)))
