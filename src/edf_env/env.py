@@ -123,6 +123,9 @@ class UR5Env(BulletEnv):
         for n, id in enumerate(self.robot_joint_ids):
             self._robot_movable_joint_idx_dict[self.robot_joint_dict[id]] = n
         
+        ############ Load table ################################################
+        if self.spawn_table:
+            self.table_id = p.loadURDF(edf_env.ROOT_DIR + "/assets/table.urdf", basePosition=self.table_pos, baseOrientation=p.getQuaternionFromEuler(self.table_rpy), globalScaling=0.4, physicsClientId = self.physicsClientId)
 
         ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
@@ -155,6 +158,15 @@ class UR5Env(BulletEnv):
             self.robot_base_pose_init['pos'] = np.array([0.0, 0.0, 0.0])
         if self.robot_base_pose_init['orn'] is None:
             self.robot_base_pose_init['orn'] = np.array([0.0, 0.0, 0.0, 1.0])
+
+        table_config: Dict[str, Any] = config['table_config']
+        if table_config['spawn'] == True:
+            self.spawn_table = True
+            self.table_pos = table_config['pos']
+            self.table_rpy = table_config['rpy']
+            self.table_center = table_config['center']
+        else:
+            self.spawn_table = False
 
     def load_robot(self, urdf_path: str) -> int:
         """Loads list of pybullet camera configs from yaml file path."""

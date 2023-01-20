@@ -8,3 +8,8 @@ robot_config:
     pos: [-1.0, 0.0, 0.0]
     orn: null
   
+table_config:
+  spawn: True
+  pos: [0.0, 0.0, -0.1]
+  rpy: [0.0, 0.0, 1.57079632679489661923132169]
+  center: [0.0, 0.0, 0.25] # Relative center

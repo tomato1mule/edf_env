@@ -133,36 +133,77 @@ def observe_cams(cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] 
 
 # code borrowed from cvshah:   https://github.com/bulletphysics/bullet3/discussions/3867
 
-def axiscreator(bodyId: int, linkId: int = -1, offset: Union[List[float], np.ndarray] = [0, 0, 0], physicsClientId: int = 0) -> List[int]:
-    print(f'axis creator at bodyId = {bodyId} and linkId = {linkId} as XYZ->RGB || offset: {offset}')
-    offset = np.array(offset)
+def pb_draw_axis(pos: np.ndarray, orn: Optional[np.ndarray] = None, orn_format: Optional[str] = None, bodyId: Optional[int] = 1, linkId: int = -1, physicsClientId: int = 0) -> List[int]:
+    """ Draws pybullet axis of the given pose """
+    if orn is None:
+        orn = np.eye(3)
+    else:
+        if orn_format == 'quat':
+            orn = p.getMatrixFromQuaternion(orn)
+            orn = np.array(orn).reshape(3,3)
+        elif orn_format == 'rpy':
+            orn = p.getMatrixFromQuaternion(p.getQuaternionFromEuler(orn))
+            orn = np.array(orn).reshape(3,3)
+        elif orn_format == 'matrix':
+            if type(orn) is not np.ndarray:
+                orn = np.array(orn).reshape(3,3)
+        else:
+            raise ValueError('Wrong orientation format is given.')
 
-    x_axis_id: int = p.addUserDebugLine(lineFromXYZ          = offset                         ,
-                                        lineToXYZ            = offset + np.array([0.2, 0, 0]) ,
-                                        lineColorRGB         = [1, 0, 0]  ,
-                                        lineWidth            = 5          ,
-                                        lifeTime             = 0          ,
-                                        parentObjectUniqueId = bodyId     ,
-                                        parentLinkIndex      = linkId     ,
-                                        physicsClientId      = physicsClientId)
 
-    y_axis_id: int = p.addUserDebugLine(lineFromXYZ          = offset                         ,
-                                        lineToXYZ            = offset + np.array([0, 0.2, 0]) ,
-                                        lineColorRGB         = [0, 1, 0]  ,
-                                        lineWidth            = 5          ,
-                                        lifeTime             = 0          ,
-                                        parentObjectUniqueId = bodyId     ,
-                                        parentLinkIndex      = linkId     ,
-                                        physicsClientId      = physicsClientId)
+    axis_length = 0.2
+    if bodyId is None:
+        x_axis_id: int = p.addUserDebugLine(lineFromXYZ          = pos,
+                                            lineToXYZ            = pos + orn[:,0]*axis_length,
+                                            lineColorRGB         = [1, 0, 0],
+                                            lineWidth            = 5,
+                                            lifeTime             = 0,
+                                            physicsClientId      = physicsClientId)
 
-    z_axis_id: int = p.addUserDebugLine(lineFromXYZ          = offset                         ,
-                                        lineToXYZ            = offset + np.array([0, 0, 0.2]) ,
-                                        lineColorRGB         = [0, 0, 1]  ,
-                                        lineWidth            = 5          ,
-                                        lifeTime             = 0          ,
-                                        parentObjectUniqueId = bodyId     ,
-                                        parentLinkIndex      = linkId     ,
-                                        physicsClientId      = physicsClientId)
+        y_axis_id: int = p.addUserDebugLine(lineFromXYZ          = pos,
+                                            lineToXYZ            = pos + orn[:,1]*axis_length,
+                                            lineColorRGB         = [0, 1, 0],
+                                            lineWidth            = 5,
+                                            lifeTime             = 0,
+                                            physicsClientId      = physicsClientId)
+
+        z_axis_id: int = p.addUserDebugLine(lineFromXYZ          = pos,
+                                            lineToXYZ            = pos + orn[:,2]*axis_length,
+                                            lineColorRGB         = [0, 0, 1],
+                                            lineWidth            = 5,
+                                            lifeTime             = 0,
+                                            physicsClientId      = physicsClientId)
+
+    else:
+        x_axis_id: int = p.addUserDebugLine(lineFromXYZ          = pos,
+                                            lineToXYZ            = pos + orn[:,0]*axis_length,
+                                            lineColorRGB         = [1, 0, 0],
+                                            lineWidth            = 5,
+                                            lifeTime             = 0,
+                                            parentObjectUniqueId = bodyId,
+                                            parentLinkIndex      = linkId,
+                                            physicsClientId      = physicsClientId)
+
+        y_axis_id: int = p.addUserDebugLine(lineFromXYZ          = pos,
+                                            lineToXYZ            = pos + orn[:,1]*axis_length,
+                                            lineColorRGB         = [0, 1, 0],
+                                            lineWidth            = 5,
+                                            lifeTime             = 0,
+                                            parentObjectUniqueId = bodyId,
+                                            parentLinkIndex      = linkId,
+                                            physicsClientId      = physicsClientId)
+
+        z_axis_id: int = p.addUserDebugLine(lineFromXYZ          = pos,
+                                            lineToXYZ            = pos + orn[:,2]*axis_length,
+                                            lineColorRGB         = [0, 0, 1],
+                                            lineWidth            = 5,
+                                            lifeTime             = 0,
+                                            parentObjectUniqueId = bodyId,
+                                            parentLinkIndex      = linkId,
+                                            physicsClientId      = physicsClientId)
+
+
+
     return [x_axis_id, y_axis_id, z_axis_id]
 
 
