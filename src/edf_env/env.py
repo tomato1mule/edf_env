@@ -125,7 +125,7 @@ class UR5Env(BulletEnv):
         
         ############ Load table ################################################
         if self.spawn_table:
-            self.table_id = p.loadURDF(edf_env.ROOT_DIR + "/assets/table.urdf", basePosition=self.table_pos, baseOrientation=p.getQuaternionFromEuler(self.table_rpy), globalScaling=0.4, physicsClientId = self.physicsClientId)
+            self.table_id = p.loadURDF(edf_env.ROOT_DIR + "/assets/table.urdf", basePosition=self.table_pos, baseOrientation=p.getQuaternionFromEuler(self.table_rpy), globalScaling=self.table_scale, physicsClientId = self.physicsClientId)
 
         ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
@@ -162,9 +162,10 @@ class UR5Env(BulletEnv):
         table_config: Dict[str, Any] = config['table_config']
         if table_config['spawn'] == True:
             self.spawn_table = True
-            self.table_pos = table_config['pos']
+            self.table_scale = table_config['scale']
+            self.table_pos = np.array(table_config['pos'])
             self.table_rpy = table_config['rpy']
-            self.table_center = table_config['center']
+            self.table_rel_center = np.array(table_config['center']) * self.table_scale
         else:
             self.spawn_table = False
 
