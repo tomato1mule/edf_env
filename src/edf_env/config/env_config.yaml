@@ -1,6 +1,6 @@
 scene_config:
-  scene_center: [0., 0., 0.3]
-  scene_ranges: [[-0.5, 0.5],[-0.5, 0.5],[-0.4, 0.8]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
+  scene_center: [-0.2, 0.0, 0.0]
+  scene_ranges: [[-0.3, 0.3],[-0.3, 0.3],[-0.0, 0.6]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
   relative_range: True
 
 robot_config: 

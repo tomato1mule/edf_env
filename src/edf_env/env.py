@@ -143,14 +143,6 @@ class UR5Env(BulletEnv):
     def load_env_config(self, config_path: str):
         """Loads environment config from yaml file path."""
         config: Dict[str, Any] = load_yaml(config_path)
-            
-        scene_config: Dict[str, Any] = config['scene_config']
-        self.scene_ranges: np.ndarray = np.array(scene_config['scene_ranges']) # [[x_min, x_max], [y_min, y_max], [z_min, z_max]];  Shape: (3,2)
-        self.scene_center: np.ndarray = np.array(scene_config['scene_center']) # [xc,yc,zc]: Shape: (3,)
-        if scene_config['relative_range'] is True:
-            self.scene_ranges = self.scene_ranges + np.stack([self.scene_center, self.scene_center], axis=1)
-        else:
-            raise NotImplementedError
 
         robot_config: Dict[str, Any] = config['robot_config']
         self.robot_base_pose_init: Dict[str, Optional[np.ndarray]] = robot_config['robot_base_pose_init']
@@ -166,8 +158,23 @@ class UR5Env(BulletEnv):
             self.table_pos = np.array(table_config['pos'])
             self.table_rpy = table_config['rpy']
             self.table_rel_center = np.array(table_config['center']) * self.table_scale
+            self.table_center = self.table_pos + self.table_rel_center
         else:
             self.spawn_table = False
+
+        scene_config: Dict[str, Any] = config['scene_config']
+
+        self.scene_center: np.ndarray = np.array(scene_config['scene_center']) # [xc,yc,zc]: Shape: (3,)
+        if self.spawn_table is True:
+            self.scene_center = self.scene_center + self.table_center
+
+        self.scene_ranges: np.ndarray = np.array(scene_config['scene_ranges']) # [[x_min, x_max], [y_min, y_max], [z_min, z_max]];  Shape: (3,2)
+        if scene_config['relative_range'] is True:
+            self.scene_ranges = self.scene_ranges + np.stack([self.scene_center, self.scene_center], axis=1)
+        else:
+            raise NotImplementedError
+
+
 
     def load_robot(self, urdf_path: str) -> int:
         """Loads list of pybullet camera configs from yaml file path."""
