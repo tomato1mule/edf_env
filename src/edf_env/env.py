@@ -112,17 +112,17 @@ class UR5Env(BulletEnv):
 
         ############ Load robot ################################################
         self.robot_id: int = self.load_robot(urdf_path=robot_path)
-        self.robot_joint_dict, self.robot_joint_type_dict, self.n_joints = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId, movable_only = True)
+        self.robot_joint_dict, self.robot_joint_type_dict, self.n_joints = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
 
-        self.robot_joint_ids = []                    # Idx: Movable joint idx (0~5) || Val: Pybullet jointId (0~27)
-        for k,v in self.robot_joint_dict.items():
-            if type(k) == int:
-                self.robot_joint_ids.append(k)
-        self.robot_joint_ids.sort()
+        # self.movable_joint_ids = []                    # Idx: Movable joint idx (0~5) || Val: Pybullet jointId (0~27)
+        # for k,v in self.robot_joint_dict.items():
+        #     if type(k) == int and self.robot_joint_type_dict[k] is not 'JOINT_FIXED':
+        #         self.movable_joint_ids.append(k)
+        # self.movable_joint_ids.sort()
 
-        self._robot_movable_joint_idx_dict: Dict[str, int] = {} # Key: Joint name || Val: Movable joint idx (0~5)         **Note that Movable joint idx (0~5) is different from Pybullet jointId (0~27)
-        for n, id in enumerate(self.robot_joint_ids):
-            self._robot_movable_joint_idx_dict[self.robot_joint_dict[id]] = n
+        # self.movable_joint_idx_dict: Dict[str, int] = {} # Key: Joint name || Val: Movable joint idx (0~5)         **Note that Movable joint idx (0~5) is different from Pybullet jointId (0~27)
+        # for n, id in enumerate(self.movable_joint_ids):
+        #     self.movable_joint_idx_dict[self.robot_joint_dict[id]] = n
         
         ############ Load table ################################################
         if self.spawn_table:
@@ -221,33 +221,36 @@ class UR5Env(BulletEnv):
         
         return np.asarray(pcd.points), np.asarray(pcd.colors)
 
-    def _get_joint_states_from_id_list(self, joint_ids: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_joint_states_from_id_list(self, joint_ids: List[int]) -> Tuple[List[float], List[float]]:
         """Docstring TODO"""
         states = p.getJointStates(bodyUniqueId = self.robot_id, jointIndices=joint_ids)
-        pos = np.array([s[0] for s in states]) # Shape: (N_joints,)
-        vel = np.array([s[1] for s in states]) # Shape: (N_joints,)
+        pos = [s[0] for s in states] # Shape: (N_joints,)
+        vel = [s[1] for s in states] # Shape: (N_joints,)
         # force = np.stack([np.array(s[2]) for s in states], axis=-2) # list of [Fx, Fy, Fz, Mx, My, Mz]  =>  Shape: (N_joints, 6)
         # applied_torque = np.array([s[3] for s in states])           # Shape: (N_joints,)
 
         return pos, vel
 
-    def get_joint_states(self) -> Tuple[np.ndarray, np.ndarray]:
+    def get_joint_states(self) -> Tuple[List[float], List[float]]:
         """Docstring TODO"""
-        pos, vel = self._get_joint_states_from_id_list(joint_ids=self.robot_joint_ids)
-        return pos, vel
+        return self._get_joint_states_from_id_list(joint_ids=list(range(self.n_joints)))
 
     def step(self):
         p.stepSimulation(physicsClientId = self.physicsClientId)
 
-    def control_target_joint_state(self, target_pos: List[float], target_vel: List[float], target_duration: float, target_joint_names: List[str]) -> bool:
+    def control_target_joint_states(self, target_pos: List[float], target_vel: List[float], target_duration: float, target_joint_names: List[str]) -> bool:
         """Docstring TODO"""
+        control_joint_IDs = []
+        for name in target_joint_names:
+            control_joint_IDs.append(self.robot_joint_dict[name])
+
         target_duration = 0.8 * target_duration
         target_steps = int(target_duration * self.sim_freq)
+        target_pos, target_vel = np.array(target_pos), np.array(target_vel)                                           # Shape: (N_target_joints, 3), (N_target_joints, 3)
 
-        current_pos, current_vel = self.get_joint_states() # Already sorted
-        target_pos = [target_pos[self._robot_movable_joint_idx_dict[name]] for name in target_joint_names]
-        target_vel = [target_vel[self._robot_movable_joint_idx_dict[name]] for name in target_joint_names]
-        target_pos, target_vel = np.array(target_pos), np.array(target_vel)
+        current_pos, current_vel = self.get_joint_states()
+        current_pos, current_vel = np.array(current_pos)[control_joint_IDs], np.array(current_vel)[control_joint_IDs] # Shape: (N_target_joints, 3), (N_target_joints, 3)
+        
 
         for step in range(target_steps):
             r = step / target_steps
@@ -257,7 +260,7 @@ class UR5Env(BulletEnv):
             force = None
             if force is None:
                 p.setJointMotorControlArray(bodyUniqueId = self.robot_id,
-                                            jointIndices = self.robot_joint_ids,
+                                            jointIndices = control_joint_IDs,
                                             controlMode = p.POSITION_CONTROL,
                                             targetPositions = pos,
                                             #targetVelocities = vel,

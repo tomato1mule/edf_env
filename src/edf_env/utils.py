@@ -263,7 +263,7 @@ def load_yaml(file_path: str) -> Any:
 ###################################### Robot #####################################
 ##################################################################################
 
-def load_joints_info(body_id: int, physicsClientId: int = 0, movable_only: bool = True) -> Tuple[Dict[Union[str, int], Union[str, int]], Dict[Union[str, int], str], int]:
+def load_joints_info(body_id: int, physicsClientId: int = 0) -> Tuple[Dict[Union[str, int], Union[str, int]], Dict[Union[str, int], str], int]:
     """docstring TODO"""
     joint_dict = {}
     joint_type_dict = {}
@@ -274,9 +274,6 @@ def load_joints_info(body_id: int, physicsClientId: int = 0, movable_only: bool 
         joint_info = p.getJointInfo(bodyUniqueId = body_id, jointIndex = joint_id)
         joint_type = jointtype_enum[joint_info[2]]
         joint_name = (joint_info[1]).decode('utf-8')
-
-        if movable_only is True and joint_type == 'JOINT_FIXED':
-            continue
 
         joint_dict[joint_id] = joint_name
         joint_type_dict[joint_id] = joint_type

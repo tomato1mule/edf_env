@@ -76,10 +76,10 @@ class UR5EnvRosWrapper():
 
         msg = JointState()
         msg.header = header
-        for n, id in enumerate(self.env.robot_joint_ids):
+        for id in range(self.env.n_joints):
             msg.name.append(self.env.robot_joint_dict[id])
-            msg.position.append(pos[n])
-            msg.velocity.append(vel[n])
+            msg.position.append(pos[id])
+            msg.velocity.append(vel[id])
         self.joint_pub.publish(msg)
 
     def execute_cb(self, goal):
@@ -108,7 +108,7 @@ class UR5EnvRosWrapper():
             target_duration = point.time_from_start.to_sec() - target_time_from_start
             target_time_from_start: float = point.time_from_start.to_sec()
 
-            self.env.control_target_joint_state(target_pos=target_pos, target_vel=target_vel, target_duration=target_duration, target_joint_names=joint_names)
+            self.env.control_target_joint_states(target_pos=target_pos, target_vel=target_vel, target_duration=target_duration, target_joint_names=joint_names)
 
             # publish the feedback
             header = Header()
