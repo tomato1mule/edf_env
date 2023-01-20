@@ -6,7 +6,7 @@ scene_config:
 
 robot_config: 
   robot_base_pose_init:
-    pos: [-0.6, 0.0, 0.0]
+    pos: [-0.7, 0.0, 0.0]
     orn: null
   robot_joint_init:
   - name: "ur_arm_elbow_joint" 
