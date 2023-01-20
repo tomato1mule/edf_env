@@ -53,14 +53,14 @@ def encode_pc(points: np.ndarray, colors: np.ndarray) -> np.ndarray:
     N = len(points)
     assert len(colors) == N
 
-    colors = colors * 255
+    #colors = colors * 255
 
     pc = np.empty(N, dtype=[('x', np.float32),
                             ('y', np.float32),
                             ('z', np.float32),
-                            ('r', np.uint8),
-                            ('g', np.uint8),
-                            ('b', np.uint8),
+                            ('r', np.float32),
+                            ('g', np.float32),
+                            ('b', np.float32),
                             ])
 
     pc['x'] = points[:,0]
