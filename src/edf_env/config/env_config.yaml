@@ -8,6 +8,19 @@ robot_config:
   robot_base_pose_init:
     pos: [-0.6, 0.0, 0.0]
     orn: null
+  robot_joint_init:
+  - name: "ur_arm_elbow_joint" 
+    value: 1.1629
+  - name: "ur_arm_shoulder_lift_joint" 
+    value: -1.9787
+  - name: "ur_arm_shoulder_pan_joint"
+    value: 0
+  - name: "ur_arm_wrist_1_joint" 
+    value: -1.215
+  - name: "ur_arm_wrist_2_joint" 
+    value: -1.6315
+  - name: "ur_arm_wrist_3_joint" 
+    value: 0
   
 table_config:
   spawn: True

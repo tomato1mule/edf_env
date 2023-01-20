@@ -113,6 +113,7 @@ class UR5Env(BulletEnv):
         ############ Load robot ################################################
         self.robot_id: int = self.load_robot(urdf_path=robot_path)
         self.robot_joint_dict, self.robot_joint_type_dict, self.n_joints = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
+        self.init_robot_pose()
 
         # self.movable_joint_ids = []                    # Idx: Movable joint idx (0~5) || Val: Pybullet jointId (0~27)
         # for k,v in self.robot_joint_dict.items():
@@ -151,6 +152,7 @@ class UR5Env(BulletEnv):
             self.robot_base_pose_init['pos'] = np.array([0.0, 0.0, 0.0])
         if self.robot_base_pose_init['orn'] is None:
             self.robot_base_pose_init['orn'] = np.array([0.0, 0.0, 0.0, 1.0])
+        self.robot_joint_init = robot_config['robot_joint_init']
 
         table_config: Dict[str, Any] = config['table_config']
         if table_config['spawn'] == True:
@@ -173,7 +175,6 @@ class UR5Env(BulletEnv):
         else:
             raise NotImplementedError
         self.scene_voxel_filter_size = scene_config['pc_voxel_filter_size']
-
 
     def load_robot(self, urdf_path: str) -> int:
         """Loads list of pybullet camera configs from yaml file path."""
@@ -274,3 +275,9 @@ class UR5Env(BulletEnv):
     def get_base_pose(self):
         pos, orn = p.getBasePositionAndOrientation(bodyUniqueId = self.robot_id, physicsClientId = self.physicsClientId)
         return pos, orn
+
+    def init_robot_pose(self):
+        for config in self.robot_joint_init:
+            name = config['name']
+            value = config['value']
+            p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict[name], targetValue = value)
