@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 from typing import Optional
 
-def pcd_from_numpy(coord: np.ndarray, color: Optional[np.ndarray]):
+def pcd_from_numpy(coord: np.ndarray, color: Optional[np.ndarray], voxel_filter_size: Optional[float] = None):
     assert len(coord.shape) == 2, f"coord must be of shape (N_points, 3), but shape {coord.shape} is given."
     if color is None:
         raise NotImplementedError
@@ -11,6 +11,9 @@ def pcd_from_numpy(coord: np.ndarray, color: Optional[np.ndarray]):
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(coord)
     pcd.colors = o3d.utility.Vector3dVector(color)
+
+    if voxel_filter_size is not None:
+        pcd = pcd.voxel_down_sample(voxel_size=voxel_filter_size)
 
     return pcd
 
