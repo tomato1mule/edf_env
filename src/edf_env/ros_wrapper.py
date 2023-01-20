@@ -5,12 +5,15 @@ import numpy as np
 
 import rospy
 import actionlib
+import tf2_ros
 from ros_numpy.point_cloud2 import array_to_pointcloud2
 
 from sensor_msgs.msg import JointState, PointCloud2
 from std_msgs.msg import Header, Duration
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryFeedback, FollowJointTrajectoryResult, JointTolerance
 from trajectory_msgs.msg import JointTrajectory
+from geometry_msgs.msg import TransformStamped
+
 
 from edf_env.env import UR5Env
 from edf_env.pc_utils import encode_pc
@@ -26,9 +29,11 @@ class UR5EnvRosWrapper():
         self.env: UR5Env = env
 
         self.current_traj: Optional[JointTrajectory] = None
+        self.scene_pc_msg: Optional[PointCloud2] = None 
 
         self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False, queue_size=10)
-        self.scene_pc_pub = rospy.Publisher('scene_pointcloud', PointCloud2, latch=True)
+        self.scene_pc_pub = rospy.Publisher('scene_pointcloud', PointCloud2, latch=False, queue_size=1)
+        self.base_link_tf_broadcaster = tf2_ros.TransformBroadcaster()
         self.arm_ctrl_AS_name = 'arm_controller/follow_joint_trajectory'
         self.arm_ctrl_AS = actionlib.SimpleActionServer(self.arm_ctrl_AS_name, FollowJointTrajectoryAction,
                                                               execute_cb = self.execute_cb, auto_start = False)                                                           
@@ -37,22 +42,14 @@ class UR5EnvRosWrapper():
 
 
         self.threads=[]
-        jointpub_thread = threading.Thread(name='jointpub_thread', target=self.jointpub_thread)
-        self.threads.append(jointpub_thread)
+        self.threads.append(threading.Thread(name='jointpub_thread', target=self.jointpub_thread))
+        self.threads.append(threading.Thread(name='tfpub_thread', target=self.tfpub_thread))
+        self.threads.append(threading.Thread(name='pcpub_thread', target=self.pcpub_thread))
 
 
-        self.publish_scene_pc()
+        self.update_scene_pc_msg()
         for thread in self.threads:
             thread.start()
-
-    def publish_scene_pc(self):
-        stamp = rospy.Time.now()
-        frame_id = 'map'
-
-        points, colors = self.env.observe_scene_pc()
-        pc = encode_pc(points=points, colors=colors)
-        msg: PointCloud2 = array_to_pointcloud2(cloud_arr = pc, stamp=stamp, frame_id=frame_id)
-        self.scene_pc_pub.publish(msg)
 
     def close(self):
         self.env.close()
@@ -66,7 +63,18 @@ class UR5EnvRosWrapper():
         while not rospy.is_shutdown():
             self.publish_joint_info()
             rate.sleep()
-        
+
+    def tfpub_thread(self):
+        rate = rospy.Rate(10) 
+        while not rospy.is_shutdown():
+            self.publish_base_link_tf()
+            rate.sleep()
+
+    def pcpub_thread(self):
+        rate = rospy.Rate(2) 
+        while not rospy.is_shutdown():
+            self.publish_scene_pc()
+            rate.sleep()
 
     def publish_joint_info(self):
         pos, vel = self.env.get_joint_states()
@@ -125,6 +133,32 @@ class UR5EnvRosWrapper():
             rospy.loginfo(f"{self.arm_ctrl_AS_name}: Succeeded")
             self.arm_ctrl_AS.set_succeeded(result)
 
+    def update_scene_pc_msg(self):
+        stamp = rospy.Time.now()
+        frame_id = 'map'
 
+        points, colors = self.env.observe_scene_pc()
+        pc = encode_pc(points=points, colors=colors)
+        self.scene_pc_msg: PointCloud2 = array_to_pointcloud2(cloud_arr = pc, stamp=stamp, frame_id=frame_id)
+
+    def publish_scene_pc(self):
+        if self.scene_pc_msg is None:
+            self.update_scene_pc_msg()
+        stamp = rospy.Time.now()
+        self.scene_pc_msg.header.stamp = stamp
+        self.scene_pc_pub.publish(self.scene_pc_msg)
+
+    def publish_base_link_tf(self):
+        pos, orn = self.env.get_base_pose()
+        
+        t = TransformStamped()
+
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = "map"
+        t.child_frame_id = "base_link"
+        t.transform.translation.x,  t.transform.translation.y, t.transform.translation.z = pos
+        t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w = orn
+
+        self.base_link_tf_broadcaster.sendTransform(t)
 
 

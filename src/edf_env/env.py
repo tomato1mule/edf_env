@@ -270,3 +270,7 @@ class UR5Env(BulletEnv):
             self.step()
 
         return True
+
+    def get_base_pose(self):
+        pos, orn = p.getBasePositionAndOrientation(bodyUniqueId = self.robot_id, physicsClientId = self.physicsClientId)
+        return pos, orn
