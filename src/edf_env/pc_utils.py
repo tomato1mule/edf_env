@@ -1,6 +1,8 @@
+from typing import Optional, Tuple
+
 import open3d as o3d
 import numpy as np
-from typing import Optional
+
 
 def pcd_from_numpy(coord: np.ndarray, color: Optional[np.ndarray], voxel_filter_size: Optional[float] = None):
     assert len(coord.shape) == 2, f"coord must be of shape (N_points, 3), but shape {coord.shape} is given."
@@ -16,6 +18,12 @@ def pcd_from_numpy(coord: np.ndarray, color: Optional[np.ndarray], voxel_filter_
         pcd = pcd.voxel_down_sample(voxel_size=voxel_filter_size)
 
     return pcd
+
+def pcd_to_numpy(pcd: o3d.cuda.pybind.geometry.PointCloud) -> Tuple[np.ndarray, np.ndarray]:
+    points = np.asarray(pcd.points)
+    colors = np.asarray(pcd.colors)
+
+    return points, colors
 
 # DEPRECATED
 # def draw_pcd(input):
@@ -41,3 +49,25 @@ def draw_geometry(geometries):
 
 
 
+def encode_pc(points: np.ndarray, colors: np.ndarray) -> np.ndarray:
+    N = len(points)
+    assert len(colors) == N
+
+    colors = colors * 255
+
+    pc = np.empty(N, dtype=[('x', np.float32),
+                            ('y', np.float32),
+                            ('z', np.float32),
+                            ('r', np.uint8),
+                            ('g', np.uint8),
+                            ('b', np.uint8),
+                            ])
+
+    pc['x'] = points[:,0]
+    pc['y'] = points[:,1]
+    pc['z'] = points[:,2]
+    pc['r'] = colors[:,0]
+    pc['g'] = colors[:,1]
+    pc['b'] = colors[:,2]
+
+    return pc

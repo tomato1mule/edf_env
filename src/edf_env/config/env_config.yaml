@@ -2,6 +2,7 @@ scene_config:
   scene_center: [-0.2, 0.0, 0.0]
   scene_ranges: [[-0.3, 0.3],[-0.3, 0.3],[-0.0, 0.6]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
   relative_range: True
+  pc_voxel_filter_size: 0.003
 
 robot_config: 
   robot_base_pose_init:
@@ -14,3 +15,4 @@ table_config:
   rpy: [0.0, 0.0, 0.0]
   center: [0.0, 0.0, 0.625] # Relative center
   scale: 1.0               # The table size is 1.5m * 1.0m  @  scale=1.0
+

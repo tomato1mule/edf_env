@@ -11,6 +11,7 @@ import yaml
 import edf_env
 from edf_env.utils import HideOutput, observe_cams, CamData, CamConfig, load_yaml, load_joints_info
 from edf_env.pybullet_pc_utils import pb_cams_to_pc
+from edf_env.pc_utils import pcd_from_numpy
 
 
 
@@ -163,17 +164,15 @@ class UR5Env(BulletEnv):
             self.spawn_table = False
 
         scene_config: Dict[str, Any] = config['scene_config']
-
         self.scene_center: np.ndarray = np.array(scene_config['scene_center']) # [xc,yc,zc]: Shape: (3,)
         if self.spawn_table is True:
             self.scene_center = self.scene_center + self.table_center
-
         self.scene_ranges: np.ndarray = np.array(scene_config['scene_ranges']) # [[x_min, x_max], [y_min, y_max], [z_min, z_max]];  Shape: (3,2)
         if scene_config['relative_range'] is True:
             self.scene_ranges = self.scene_ranges + np.stack([self.scene_center, self.scene_center], axis=1)
         else:
             raise NotImplementedError
-
+        self.scene_voxel_filter_size = scene_config['pc_voxel_filter_size']
 
 
     def load_robot(self, urdf_path: str) -> int:
@@ -211,6 +210,16 @@ class UR5Env(BulletEnv):
         pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.scene_ranges, stride=stride)
 
         return pc_coord, pc_color, pc_seg, cam_data_list
+
+    def observe_scene_pc(self, voxel_filter_size: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray]:
+        """DOCSTRING TODO"""
+        if voxel_filter_size is None:
+            voxel_filter_size = self.scene_voxel_filter_size
+
+        points, colors, pc_seg, cam_data_list = self.observe_scene()
+        pcd = pcd_from_numpy(coord=points, color=colors, voxel_filter_size = voxel_filter_size)
+        
+        return np.asarray(pcd.points), np.asarray(pcd.colors)
 
     def _get_joint_states_from_id_list(self, joint_ids: List[int]) -> Tuple[np.ndarray, np.ndarray]:
         """Docstring TODO"""

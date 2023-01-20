@@ -1,15 +1,25 @@
 import threading
 from typing import Optional
 
+import numpy as np
+
 import rospy
 import actionlib
+from ros_numpy.point_cloud2 import array_to_pointcloud2
 
-from sensor_msgs.msg import JointState
+from sensor_msgs.msg import JointState, PointCloud2
 from std_msgs.msg import Header, Duration
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryFeedback, FollowJointTrajectoryResult, JointTolerance
 from trajectory_msgs.msg import JointTrajectory
 
 from edf_env.env import UR5Env
+from edf_env.pc_utils import encode_pc
+
+
+
+
+
+
 
 class UR5EnvRosWrapper():
     def __init__(self, env: UR5Env):
@@ -18,6 +28,7 @@ class UR5EnvRosWrapper():
         self.current_traj: Optional[JointTrajectory] = None
 
         self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False, queue_size=10)
+        self.scene_pc_pub = rospy.Publisher('scene_pointcloud', PointCloud2, latch=True)
         self.arm_ctrl_AS_name = 'arm_controller/follow_joint_trajectory'
         self.arm_ctrl_AS = actionlib.SimpleActionServer(self.arm_ctrl_AS_name, FollowJointTrajectoryAction,
                                                               execute_cb = self.execute_cb, auto_start = False)                                                           
@@ -26,12 +37,22 @@ class UR5EnvRosWrapper():
 
 
         self.threads=[]
-        b = threading.Thread(name='background', target=self.background)
-        self.threads.append(b)
+        jointpub_thread = threading.Thread(name='jointpub_thread', target=self.jointpub_thread)
+        self.threads.append(jointpub_thread)
 
+
+        self.publish_scene_pc()
         for thread in self.threads:
             thread.start()
 
+    def publish_scene_pc(self):
+        stamp = rospy.Time.now()
+        frame_id = 'map'
+
+        points, colors = self.env.observe_scene_pc()
+        pc = encode_pc(points=points, colors=colors)
+        msg: PointCloud2 = array_to_pointcloud2(cloud_arr = pc, stamp=stamp, frame_id=frame_id)
+        self.scene_pc_pub.publish(msg)
 
     def close(self):
         self.env.close()
@@ -39,7 +60,7 @@ class UR5EnvRosWrapper():
             thread.terminate()
 
 
-    def background(self):
+    def jointpub_thread(self):
         # TODO:  https://stackoverflow.com/questions/50907224/not-able-to-terminate-the-process-in-multiprocessing-python-linux
         rate = rospy.Rate(10) # 10hz
         while not rospy.is_shutdown():

@@ -65,12 +65,13 @@ rosdep init  # note: do not use sudo!
 rosdep update
 ```
 
-# 2.2 Install Moveit2
+# 2.2 Install Moveit2 and other packages
 ```shell
 mamba install ros-noetic-moveit=1.1.0
 mamba install ros-noetic-moveit-ros-perception=1.1.0
 mamba install ros-noetic-ros-controllers=0.18.1
 mamba install ros-noetic-ros-control=0.19.4
+mamba install ros-noetic-ros-numpy=0.0.4
 ```
 
 # 2.3 Configure catkin
