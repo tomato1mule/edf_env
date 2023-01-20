@@ -8,5 +8,5 @@ controller_list:
       - ur_arm_wrist_2_joint
       - ur_arm_wrist_3_joint
 initial:  # Define initial robot poses.
-#  - group: arm
-#    pose: home
+  - group: arm
+    pose: flat
