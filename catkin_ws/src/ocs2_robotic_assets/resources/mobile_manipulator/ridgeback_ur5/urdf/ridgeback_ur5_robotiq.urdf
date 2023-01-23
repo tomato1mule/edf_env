@@ -31,7 +31,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/rocker.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/rocker.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -51,7 +51,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/wheel.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/wheel.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -76,7 +76,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/wheel.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/wheel.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -101,7 +101,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/rocker.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/rocker.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -122,7 +122,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/wheel.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/wheel.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -147,7 +147,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/wheel.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/wheel.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -178,14 +178,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/body.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/body.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
     <collision>
       <origin xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/body-collision.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/body-collision.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -208,7 +208,7 @@
     <visual>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/side-cover.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/side-cover.stl"/>
       </geometry>
       <material name="yellow"/>
     </visual>
@@ -217,7 +217,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/side-cover.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/side-cover.stl"/>
       </geometry>
       <material name="yellow"/>
     </visual>
@@ -231,7 +231,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/end-cover.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/end-cover.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -245,7 +245,7 @@
     <visual>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/end-cover.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/end-cover.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -264,7 +264,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/lights.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/lights.stl"/>
       </geometry>
       <material name="white"/>
     </visual>
@@ -273,7 +273,7 @@
     <visual>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/lights.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/lights.stl"/>
       </geometry>
       <material name="red"/>
     </visual>
@@ -287,14 +287,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/top.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/top.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/top.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/top.stl"/>
       </geometry>
     </collision>
   </link>
@@ -307,7 +307,7 @@
     <visual>
       <origin rpy="0 1.5707963267948966 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/base/axle.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/base/axle.stl"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -391,7 +391,7 @@
     <visual>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/ur5/visual/base.dae"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/visual/base.dae"/>
       </geometry>
       <material name="LightGrey">
         <color rgba="0.7 0.7 0.7 1.0"/>
@@ -400,7 +400,7 @@
     <collision>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/ur5/collision/base.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/collision/base.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -413,7 +413,7 @@
     <visual>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/ur5/visual/shoulder.dae"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/visual/shoulder.dae"/>
       </geometry>
       <material name="LightGrey">
         <color rgba="0.7 0.7 0.7 1.0"/>
@@ -422,7 +422,7 @@
     <collision>
       <origin rpy="0 0 3.141592653589793" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/ur5/collision/shoulder.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/collision/shoulder.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -435,7 +435,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.13585"/>
       <geometry>
-        <mesh filename="meshes/ur5/visual/upperarm.dae"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/visual/upperarm.dae"/>
       </geometry>
       <material name="LightGrey">
         <color rgba="0.7 0.7 0.7 1.0"/>
@@ -444,7 +444,7 @@
     <collision>
       <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.13585"/>
       <geometry>
-        <mesh filename="meshes/ur5/collision/upperarm.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/collision/upperarm.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -457,7 +457,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.0165"/>
       <geometry>
-        <mesh filename="meshes/ur5/visual/forearm.dae"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/visual/forearm.dae"/>
       </geometry>
       <material name="LightGrey">
         <color rgba="0.7 0.7 0.7 1.0"/>
@@ -466,7 +466,7 @@
     <collision>
       <origin rpy="1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0.0165"/>
       <geometry>
-        <mesh filename="meshes/ur5/collision/forearm.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/collision/forearm.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -480,7 +480,7 @@
       <!-- TODO: Move this to a parameter -->
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.093"/>
       <geometry>
-        <mesh filename="meshes/ur5/visual/wrist1.dae"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/visual/wrist1.dae"/>
       </geometry>
       <material name="LightGrey">
         <color rgba="0.7 0.7 0.7 1.0"/>
@@ -489,7 +489,7 @@
     <collision>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.093"/>
       <geometry>
-        <mesh filename="meshes/ur5/collision/wrist1.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/collision/wrist1.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -502,7 +502,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 -0.095"/>
       <geometry>
-        <mesh filename="meshes/ur5/visual/wrist2.dae"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/visual/wrist2.dae"/>
       </geometry>
       <material name="LightGrey">
         <color rgba="0.7 0.7 0.7 1.0"/>
@@ -511,7 +511,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 -0.095"/>
       <geometry>
-        <mesh filename="meshes/ur5/collision/wrist2.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/collision/wrist2.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -524,7 +524,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.0818"/>
       <geometry>
-        <mesh filename="meshes/ur5/visual/wrist3.dae"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/visual/wrist3.dae"/>
       </geometry>
       <material name="LightGrey">
         <color rgba="0.7 0.7 0.7 1.0"/>
@@ -533,7 +533,7 @@
     <collision>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.0818"/>
       <geometry>
-        <mesh filename="meshes/ur5/collision/wrist3.stl"/>
+        <mesh filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/ur5/collision/wrist3.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -657,7 +657,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/robotiq_85_base_link_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/robotiq_85_base_link_fine.stl" />
       </geometry>
       <material
         name="">
@@ -671,7 +671,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/robotiq_85_base_link_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/robotiq_85_base_link_coarse.stl" />
       </geometry>
     </collision>
   </link>
@@ -697,7 +697,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/outer_knuckle_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/outer_knuckle_fine.stl" />
       </geometry>
       <material
         name="">
@@ -711,7 +711,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/outer_knuckle_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/outer_knuckle_coarse.stl" />
       </geometry>
     </collision>
   </link>
@@ -755,7 +755,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/outer_finger_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/outer_finger_fine.stl" />
       </geometry>
       <material
         name="">
@@ -769,7 +769,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/outer_finger_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/outer_finger_coarse.stl" />
       </geometry>
     </collision>
   </link>
@@ -808,7 +808,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/inner_knuckle_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/inner_knuckle_fine.stl" />
       </geometry>
       <material
         name="">
@@ -822,7 +822,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/inner_knuckle_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/inner_knuckle_coarse.stl" />
       </geometry>
     </collision>
   </link>
@@ -870,7 +870,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/inner_finger_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/inner_finger_fine.stl" />
       </geometry>
       <material
         name="">
@@ -884,7 +884,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/inner_finger_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/inner_finger_coarse.stl" />
       </geometry>
     </collision>
   </link>
@@ -932,7 +932,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/inner_knuckle_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/inner_knuckle_fine.stl" />
       </geometry>
       <material
         name="">
@@ -946,7 +946,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/inner_knuckle_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/inner_knuckle_coarse.stl" />
       </geometry>
     </collision>
   </link>
@@ -994,7 +994,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/inner_finger_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/inner_finger_fine.stl" />
       </geometry>
       <material
         name="">
@@ -1008,7 +1008,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/inner_finger_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/inner_finger_coarse.stl" />
       </geometry>
     </collision>
   </link>
@@ -1056,7 +1056,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/outer_knuckle_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/outer_knuckle_fine.stl" />
       </geometry>
       <material
         name="">
@@ -1070,7 +1070,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/outer_knuckle_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/outer_knuckle_coarse.stl" />
       </geometry>
     </collision>
   </link>
@@ -1118,7 +1118,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/outer_finger_fine.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/outer_finger_fine.stl" />
       </geometry>
       <material
         name="">
@@ -1132,7 +1132,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="meshes/robotiq/outer_finger_coarse.stl" />
+          filename="package://ocs2_robotic_assets/resources/mobile_manipulator/ridgeback_ur5/meshes/robotiq/outer_finger_coarse.stl" />
       </geometry>
     </collision>
   </link>
