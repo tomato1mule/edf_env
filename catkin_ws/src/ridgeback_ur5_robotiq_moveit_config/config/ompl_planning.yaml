@@ -157,7 +157,7 @@ arm:
   projection_evaluator: joints(ur_arm_shoulder_pan_joint,ur_arm_shoulder_lift_joint)
   longest_valid_segment_fraction: 0.005
 gripper:
-  default_planner_config: None
+  default_planner_config: ""
   planner_configs:
     - AnytimePathShortening
     - SBL

@@ -34,9 +34,4 @@ controller_list:
       - ur_arm_wrist_1_joint
       - ur_arm_wrist_2_joint
       - ur_arm_wrist_3_joint
-  - name: gripper_controller
-    action_ns: follow_joint_trajectory
-    default: True
-    type: FollowJointTrajectory
-    joints:
-      finger_joint
+      - finger_joint
