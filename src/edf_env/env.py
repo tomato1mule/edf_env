@@ -85,7 +85,7 @@ class UR5Env(BulletEnv):
                  env_config_path: str = os.path.join(edf_env.ROOT_DIR, 'config/env_config.yaml'), 
                  scene_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/scene_camera_config.yaml'), 
                  grasp_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/grasp_camera_config.yaml'), 
-                 robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5.urdf'), 
+                 robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5_robotiq.urdf'), 
                  use_gui: bool = True, 
                  sim_freq: float = 1000):
         """Pybullet environment with UR5 Robot
