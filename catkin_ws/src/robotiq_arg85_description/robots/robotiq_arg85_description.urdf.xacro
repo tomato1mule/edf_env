@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <robot
-  name="robotiq_arg85_description">
+  name="robotiq_arg85_description" xmlns:xacro="http://wiki.ros.org/xacro">
   <link
     name="robotiq_85_base_link">
     <inertial>
