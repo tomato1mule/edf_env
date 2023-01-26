@@ -328,3 +328,46 @@ class UR5Env(BulletEnv):
                                 physicsClientId = self.physicsClientId,
                                 force = max_torque
                                 )
+
+
+
+
+
+class MugEnv(UR5Env):
+    def __init__(self, 
+                 env_config_path: str = os.path.join(edf_env.ROOT_DIR, 'config/env_config.yaml'), 
+                 scene_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/scene_camera_config.yaml'), 
+                 grasp_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/grasp_camera_config.yaml'), 
+                 robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5_robotiq.urdf'), 
+                 use_gui: bool = True, 
+                 sim_freq: float = 1000):
+        """Pybullet environment with UR5 Robot and a mug with hanger
+
+        Args:
+            env_config_path: Path to the pybullet environment configuration file.
+            scene_cam_config_path: Path to the camera configuration file for scene observation.
+            grasp_cam_config_path: Path to the camera configuration file for observing robot's hand (to see how the robot is gripping the object).
+            robot_path: Path to the robot description file (in URDF format).
+            use_gui (bool): If True, Pybullet would run with visual server. Otherewise would run with headless mode.
+            sim_freq: fps of simulation (e.g.  sim_freq=1000 means 1000 simulation steps per 1 second in simulated time).
+
+        Attributes:
+            self.physicsClientId (int): Pybullet physics server id.
+            self.sim_freq (float): fps of simulation (e.g.  sim_freq=1000 means 1000 simulation steps per 1 second in simulated time).
+            self.plane_id (int): Pybullet body id of the plane (ground).
+            self.scene_cam_configs: A list of pybullet camera configurations for scene observation.
+            self.grasp_cam_configs: A list of pybullet camera configurations for observing robot's hand (to see how the robot is gripping the object).
+
+        """
+
+        super().__init__(env_config_path=env_config_path, scene_cam_config_path=scene_cam_config_path, grasp_cam_config_path=grasp_cam_config_path, robot_path=robot_path, use_gui=use_gui, sim_freq=sim_freq)
+        self.mug_id = self.spawn_mug('train_0', pos = self.scene_center + np.array([0, 0, 0.1]), scale = 1.5)
+
+        for _ in range(1000):
+            self.step()
+
+    def spawn_mug(self, mug_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0) -> int:
+        if orn is None:
+            return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug/{mug_name}.urdf"), basePosition=pos, globalScaling=scale, physicsClientId = self.physicsClientId)
+        
+        raise NotImplementedError
