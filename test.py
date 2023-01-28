@@ -13,6 +13,7 @@ scene = moveit_commander.PlanningSceneInterface()
 group_name = "arm"
 move_group = moveit_commander.MoveGroupCommander(group_name)
 
+move_group.set_pose_reference_frame('map')
 
 # # We can get the name of the reference frame for this robot:
 # planning_frame = move_group.get_planning_frame()
@@ -39,7 +40,7 @@ pose_goal.orientation.x = 0.0
 pose_goal.orientation.y = 1.0
 pose_goal.orientation.z = 0.0
 pose_goal.orientation.w = 0.0
-pose_goal.position.x = 0.7
+pose_goal.position.x = 0.0
 pose_goal.position.y = 0.0
 pose_goal.position.z = 0.75
 
