@@ -82,5 +82,6 @@ catkin_make
 
 # 2.5 
 ```shell
-source {PATH/TO}/edf_env/catkin_ws/devel/setup.bash
+# source {PATH/TO}/edf_env/catkin_ws/devel/setup.bash
+bash conda_env_setup.sh
 ```
