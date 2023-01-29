@@ -43,7 +43,7 @@ class UR5EnvRosWrapper():
         self.monitor_refresh_rate = monitor_refresh_rate
         self.monitor_img_pubs = []
         for i in range(len(self.env.monitor_cam_configs)):
-            self.monitor_img_pubs.append(rospy.Publisher(f"monitor_img_{i}", Image, latch=False, queue_size=1))
+            self.monitor_img_pubs.append(rospy.Publisher(f"monitor_img_{i}", Image, latch=False, queue_size=10))
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
@@ -69,20 +69,20 @@ class UR5EnvRosWrapper():
     def monitor_imgpub_thread(self):
         rate = rospy.Rate(self.monitor_refresh_rate)
         while not rospy.is_shutdown():
-            imgs = [cam_dat['color'] for cam_dat in self.env.observe_monitor_img()]
+            imgs = [cam_dat['color'] for cam_dat in self.env.observe_monitor_img(return_seg=False, color_encoding='uint8')]
             for img, pub in zip(imgs, self.monitor_img_pubs):
                 self.publish_image(img=img, pub=pub)
             rate.sleep()
 
     def jointpub_thread(self):
         # TODO:  https://stackoverflow.com/questions/50907224/not-able-to-terminate-the-process-in-multiprocessing-python-linux
-        rate = rospy.Rate(10) # 10hz
+        rate = rospy.Rate(20) # 10hz
         while not rospy.is_shutdown():
             self.publish_joint_info()
             rate.sleep()
 
     def tfpub_thread(self):
-        rate = rospy.Rate(10) 
+        rate = rospy.Rate(20) 
         while not rospy.is_shutdown():
             self.publish_base_link_tf()
             rate.sleep()
@@ -179,7 +179,7 @@ class UR5EnvRosWrapper():
         self.base_link_tf_broadcaster.sendTransform(t)
 
     def publish_image(self, img: np.ndarray, pub: rospy.Publisher):
-        msg = numpy_to_image(arr=(img*255).astype(np.uint8), encoding="rgb8")
+        msg = numpy_to_image(arr=img, encoding="rgb8")
         header = Header()
         header.stamp = rospy.Time.now()
         msg.header = header

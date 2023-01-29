@@ -35,6 +35,8 @@ class BulletEnv():
 
         with HideOutput():                     # To prevent verbose Pybullet details from being printed.
             self.physicsClientId: int = p.connect(p.GUI if use_gui else p.DIRECT )
+        if use_gui:
+            p.configureDebugVisualizer(flag = p.COV_ENABLE_MOUSE_PICKING, enable = 0)
         self.sim_freq: float = sim_freq
         self.init_task()
 
@@ -56,7 +58,7 @@ class BulletEnv():
         cam_configs: List[CamConfig] = load_yaml(cam_config_path)
         return cam_configs
 
-    def observe_cams(self, cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] = None) -> List[CamData]:
+    def observe_cams(self, cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] = None, return_seg: bool = False, color_encoding: str = "float") -> List[CamData]:
         """Observes multiple pybullet virtual camera data from list of camera configurations.
         If target_pos is specified, all the cameras will look at the same fixation point in the specificed target position.
 
@@ -73,7 +75,7 @@ class BulletEnv():
                 
         """
         
-        return observe_cams(cam_configs=cam_configs, target_pos=target_pos, physicsClientId=self.physicsClientId)
+        return observe_cams(cam_configs=cam_configs, target_pos=target_pos, return_seg = return_seg, color_encoding=color_encoding, physicsClientId=self.physicsClientId)
         
     def observe(self):
         raise NotImplementedError
@@ -190,12 +192,12 @@ class UR5Env(BulletEnv):
         robot_id = p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'], useFixedBase = True)
         return robot_id
 
-    def observe_monitor_img(self, target_pos: Optional[np.ndarray] = None) -> List[CamData]:
+    def observe_monitor_img(self, target_pos: Optional[np.ndarray] = None, return_seg: bool = False, color_encoding: str = "float") -> List[CamData]:
         if target_pos is None:
             target_pos = self.scene_center
-        return self.observe_cams(cam_configs=self.monitor_cam_configs, target_pos=target_pos)
+        return self.observe_cams(cam_configs=self.monitor_cam_configs, target_pos=target_pos, return_seg=return_seg, color_encoding=color_encoding)
 
-    def observe_scene(self, stride: Union[np.ndarray, list, tuple] = (1,1)) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], List[CamData]]:
+    def observe_scene(self, stride: Union[np.ndarray, list, tuple] = (1,1), return_seg: bool = False, color_encoding: str = "float") -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], List[CamData]]:
         """Get point cloud and camera observation data of the scene.
 
         Returns:
@@ -220,17 +222,19 @@ class UR5Env(BulletEnv):
         """
         assert self.scene_cam_configs, "Scene camera configuration is not assigned."
 
-        cam_data_list: List[CamData] = self.observe_cams(cam_configs=self.scene_cam_configs, target_pos=self.scene_center)
+        cam_data_list: List[CamData] = self.observe_cams(cam_configs=self.scene_cam_configs, target_pos=self.scene_center, return_seg=return_seg, color_encoding=color_encoding)
         pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.scene_ranges, stride=stride)
 
         return pc_coord, pc_color, pc_seg, cam_data_list
 
-    def observe_scene_pc(self, voxel_filter_size: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray]:
+    def observe_scene_pc(self, voxel_filter_size: Optional[float] = None, segmented: bool = False) -> Tuple[np.ndarray, np.ndarray]:
         """DOCSTRING TODO"""
         if voxel_filter_size is None:
             voxel_filter_size = self.scene_voxel_filter_size
 
-        points, colors, pc_seg, cam_data_list = self.observe_scene()
+        points, colors, pc_seg, cam_data_list = self.observe_scene(return_seg = segmented, color_encoding = "float")
+        if segmented is True:
+            raise NotImplementedError
         pcd = pcd_from_numpy(coord=points, color=colors, voxel_filter_size = voxel_filter_size)
         
         return np.asarray(pcd.points), np.asarray(pcd.colors)

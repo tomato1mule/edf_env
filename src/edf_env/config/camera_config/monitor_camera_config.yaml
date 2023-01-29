@@ -1,11 +1,11 @@
 # Cam 0 Config
-- distance: 0.5
-  ypr: [90., -70., 0.]
+- distance: 0.8
+  ypr: [50., -40., 0.]
   W: 160
-  H: 120
+  H: 240
   up: [0., 0., 1.]
   up_axis_idx: 2
   near: 0.01
   far : 100.
-  fov : 75. 
+  fov : 100. 
   target_pos: null

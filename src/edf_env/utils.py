@@ -32,7 +32,7 @@ class CamData(TypedDict):
     W: int
     H: int
 
-def get_pybullet_cam_data(cam_config: CamConfig, physicsClientId: int = 0) -> CamData:
+def get_pybullet_cam_data(cam_config: CamConfig, return_seg: bool = False, color_encoding: str = "float", physicsClientId: int = 0) -> CamData:
     """Get the camera data of a speficied camera configuration from Pybullet server
 
     Returns:
@@ -51,6 +51,7 @@ def get_pybullet_cam_data(cam_config: CamConfig, physicsClientId: int = 0) -> Ca
 
     Args:
         cam_config (CamConfig): A typed dict that specifies camera configurations.
+        return_seg (bool): If false, no segmentation is returned
         physicsClientId (int): Pybullet server ID.
 
     Note:
@@ -82,15 +83,25 @@ def get_pybullet_cam_data(cam_config: CamConfig, physicsClientId: int = 0) -> Ca
     cam_view_matrix = p.computeViewMatrixFromYawPitchRoll(cam_target_pos, cam_distance, cam_yaw, cam_pitch, cam_roll, cam_up_axis_idx)
     cam_projection_matrix = p.computeProjectionMatrixFOV(cam_fov, cam_width*1./cam_height, cam_near_plane, cam_far_plane)
 
-    W, H, image, depth, seg = p.getCameraImage(cam_width, cam_height, cam_view_matrix, cam_projection_matrix, physicsClientId = physicsClientId)
-    image = image[:,:,:3] / 255
+    if return_seg is False:
+        W, H, image, depth, seg = p.getCameraImage(cam_width, cam_height, cam_view_matrix, cam_projection_matrix, physicsClientId = physicsClientId, flags = p.ER_NO_SEGMENTATION_MASK)
+        seg = None
+    else:
+        W, H, image, depth, seg = p.getCameraImage(cam_width, cam_height, cam_view_matrix, cam_projection_matrix, physicsClientId = physicsClientId)
+    
+    if color_encoding == 'float':
+        image = image[:,:,:3] / 255
+    elif color_encoding == 'uint8':
+        image = image[:,:,:3]
+    else:
+        raise ValueError("Encoding must be either float or uint8.")
 
 
     cam_data: CamData = {'color': image, 'depth': depth, 'seg': seg, 'view': cam_view_matrix, 'proj': cam_projection_matrix, 'W': W, 'H': H}
     return cam_data
 
 
-def observe_cams(cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] = None, physicsClientId: int = 0) -> List[CamData]:
+def observe_cams(cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] = None, return_seg: bool = False, color_encoding: str = "float", physicsClientId: int = 0) -> List[CamData]:
     """Observes multiple pybullet virtual camera data from list of camera configurations.
     If target_pos is specified, all the cameras will look at the same fixation point in the specificed target position.
 
@@ -116,7 +127,7 @@ def observe_cams(cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] 
             config['target_pos'] = target_pos.copy()
         else:
             assert config['target_pos'] is not None, "Target position of the camera must be specified."
-        data: CamData = get_pybullet_cam_data(config, physicsClientId = physicsClientId)
+        data: CamData = get_pybullet_cam_data(config, return_seg=return_seg, color_encoding=color_encoding, physicsClientId=physicsClientId)
         outputs.append(data)
 
     return outputs
