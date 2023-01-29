@@ -1,6 +1,6 @@
 # Cam 0 Config
-- distance: 0.8
-  ypr: [50., -40., 0.]
+- distance: 1.0
+  ypr: [50., -30., 0.]
   W: 160
   H: 240
   up: [0., 0., 1.]

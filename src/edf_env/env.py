@@ -32,11 +32,15 @@ class BulletEnv():
             self.plane_id (int): Pybullet body id of the plane (ground).
 
         """
-
+        self.use_gui = use_gui
         with HideOutput():                     # To prevent verbose Pybullet details from being printed.
-            self.physicsClientId: int = p.connect(p.GUI if use_gui else p.DIRECT )
+            if use_gui:
+                self.physicsClientId: int = p.connect(p.GUI, options='--width=500 --height=500')
+            else:
+                self.physicsClientId: int = p.connect(p.DIRECT)
         if use_gui:
             p.configureDebugVisualizer(flag = p.COV_ENABLE_MOUSE_PICKING, enable = 0)
+            p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
         self.sim_freq: float = sim_freq
         self.init_task()
 
@@ -128,9 +132,14 @@ class UR5Env(BulletEnv):
         # for n, id in enumerate(self.movable_joint_ids):
         #     self.movable_joint_idx_dict[self.robot_joint_dict[id]] = n
         
+        # self.disable_gripper_self_collision()
+        self.set_gripper_constraint()
+
+
         ############ Load table ################################################
         if self.spawn_table:
             self.table_id = p.loadURDF(edf_env.ROOT_DIR + "/assets/table.urdf", basePosition=self.table_pos, baseOrientation=p.getQuaternionFromEuler(self.table_rpy), globalScaling=self.table_scale, physicsClientId = self.physicsClientId)
+
 
         ############ Load camera configurations ################################################
         if scene_cam_config_path is None:
@@ -147,10 +156,9 @@ class UR5Env(BulletEnv):
             self.monitor_cam_configs = None
         else:
             self.monitor_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=monitor_cam_config_path)
+            debug_config = self.monitor_cam_configs[0]
+            p.resetDebugVisualizerCamera(cameraDistance = debug_config['distance'], cameraYaw = debug_config['ypr'][0], cameraPitch = debug_config['ypr'][1], cameraTargetPosition = self.scene_center, physicsClientId=self.physicsClientId)
         #########################################################################################
-
-        # self.disable_gripper_self_collision()
-        self.set_gripper_constraint()
 
        
     def load_env_config(self, config_path: str):
