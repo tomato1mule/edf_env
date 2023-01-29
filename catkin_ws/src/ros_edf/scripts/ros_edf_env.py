@@ -7,7 +7,7 @@ from edf_env.ros_wrapper import UR5EnvRosWrapper
 
 def run():
     env = MugEnv(use_gui=True)
-    env_ros = UR5EnvRosWrapper(env=env)
+    env_ros = UR5EnvRosWrapper(env=env, monitor_refresh_rate=0)
     rospy.spin()
 
 

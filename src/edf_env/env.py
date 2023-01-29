@@ -85,6 +85,7 @@ class UR5Env(BulletEnv):
                  env_config_path: str = os.path.join(edf_env.ROOT_DIR, 'config/env_config.yaml'), 
                  scene_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/scene_camera_config.yaml'), 
                  grasp_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/grasp_camera_config.yaml'), 
+                 monitor_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/monitor_camera_config.yaml'),
                  robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5_robotiq.urdf'), 
                  use_gui: bool = True, 
                  sim_freq: float = 1000):
@@ -133,12 +134,17 @@ class UR5Env(BulletEnv):
         if scene_cam_config_path is None:
             self.scene_cam_configs = None
         else:
-            self.scene_cam_configs = self.load_cam_config(cam_config_path=scene_cam_config_path)
+            self.scene_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=scene_cam_config_path)
 
         if grasp_cam_config_path is None:
             self.grasp_cam_configs = None
         else:
-            self.grasp_cam_configs = self.load_cam_config(cam_config_path=grasp_cam_config_path)
+            self.grasp_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=grasp_cam_config_path)
+
+        if monitor_cam_config_path is None:
+            self.monitor_cam_configs = None
+        else:
+            self.monitor_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=monitor_cam_config_path)
         #########################################################################################
 
         # self.disable_gripper_self_collision()
@@ -184,6 +190,10 @@ class UR5Env(BulletEnv):
         robot_id = p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'], useFixedBase = True)
         return robot_id
 
+    def observe_monitor_img(self, target_pos: Optional[np.ndarray] = None) -> List[CamData]:
+        if target_pos is None:
+            target_pos = self.scene_center
+        return self.observe_cams(cam_configs=self.monitor_cam_configs, target_pos=target_pos)
 
     def observe_scene(self, stride: Union[np.ndarray, list, tuple] = (1,1)) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], List[CamData]]:
         """Get point cloud and camera observation data of the scene.
@@ -415,6 +425,7 @@ class MugEnv(UR5Env):
                  env_config_path: str = os.path.join(edf_env.ROOT_DIR, 'config/env_config.yaml'), 
                  scene_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/scene_camera_config.yaml'), 
                  grasp_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/grasp_camera_config.yaml'), 
+                 monitor_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/monitor_camera_config.yaml'),
                  robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5_robotiq.urdf'), 
                  use_gui: bool = True, 
                  sim_freq: float = 1000):
@@ -437,7 +448,7 @@ class MugEnv(UR5Env):
 
         """
 
-        super().__init__(env_config_path=env_config_path, scene_cam_config_path=scene_cam_config_path, grasp_cam_config_path=grasp_cam_config_path, robot_path=robot_path, use_gui=use_gui, sim_freq=sim_freq)
+        super().__init__(env_config_path=env_config_path, scene_cam_config_path=scene_cam_config_path, grasp_cam_config_path=grasp_cam_config_path, monitor_cam_config_path=monitor_cam_config_path, robot_path=robot_path, use_gui=use_gui, sim_freq=sim_freq)
         self.mug_id = self.spawn_mug('train_0', pos = self.scene_center + np.array([0, 0, 0.1]), scale = 1.5)
 
         for _ in range(1000):
