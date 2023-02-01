@@ -103,7 +103,7 @@ class EdfRosInterface(EdfInterface):
         self.update_scene_pc_flag = False
         self.scene_pc_raw = None
         self.scene_pc = None
-        self.update_scene_pc(request_update=False)
+        self.update_scene_pc(request_update=False, timeout_sec=5.0)
 
 
     def _scene_pc_callback(self, data: PointCloud2):
@@ -113,7 +113,7 @@ class EdfRosInterface(EdfInterface):
         else:
             pass
 
-    def update_scene_pc(self, request_update: bool = True, timeout_sec: float = 5) -> bool:
+    def update_scene_pc(self, request_update: bool = True, timeout_sec: float = 5.0) -> bool:
         rospy.loginfo(f"Commencing scene point cloud update...")
         if request_update:
             self.request_scene_pc_update()
@@ -148,11 +148,13 @@ class EdfRosInterface(EdfInterface):
     def observe_scene(self, obs_type: str ='pointcloud', update: bool = True) -> Optional[Union[Tuple[np.ndarray, np.ndarray], List[CamData]]]:
         if obs_type == 'pointcloud':
             if update:
-                update_result = self.update_scene_pc()
+                update_result = self.update_scene_pc(request_update=True)
                 if update_result is True:
-                    return self.scene_pc
+                    return self.scene_pc   # (points, colors)
                 else:
                     return False
+            else:
+                return self.scene_pc       # (points, colors)
         elif obs_type == 'image':
             raise NotImplementedError
         else:
