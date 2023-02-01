@@ -36,5 +36,6 @@ setup(
         'mypy',
         'nb_mypy',
         'types-PyYAML',
+        'pyassimp'       # 4.1.4
     ]
 )

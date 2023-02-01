@@ -85,3 +85,9 @@ catkin_make
 # source {PATH/TO}/edf_env/catkin_ws/devel/setup.bash
 bash conda_env_setup.sh
 ```
+
+# 3
+```shell
+pip install jupyterthemes
+jt -t onedork -fs 115 -nfs 125 -tfs 115 -dfs 115 -ofs 115 -cursc r -cellw 80% -lineh 115 -altmd  -kl -T -N
+```

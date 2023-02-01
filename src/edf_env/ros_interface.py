@@ -215,7 +215,7 @@ class EdfMoveitInterface():
         assert pos.ndim == 1 and pos.shape[-1] == 3 and orn.ndim == 1 and orn.shape[-1] == 4 # Quaternion
 
         pose_goal = Pose()
-        pose_goal.orientation.x, pose_goal.orientation.y, pose_goal.orientation.z  = pos
+        pose_goal.position.x, pose_goal.position.y, pose_goal.position.z  = pos
         if versor_comes_first:
             pose_goal.orientation.w, pose_goal.orientation.x, pose_goal.orientation.y, pose_goal.orientation.z = orn 
         else:
@@ -240,6 +240,14 @@ class EdfMoveitInterface():
             self.arm_group.stop()
             return False
 
+    def control_gripper(self, gripper_val: float) -> bool:
+        joint_goal = self.gripper_group.get_current_joint_values()
+        joint_goal[0] = gripper_val
+        self.gripper_group.clear_pose_targets()
+        result = self.gripper_group.go(joint_goal, wait=True)
+        self.gripper_group.stop()
+
+        return result
 
 # class EdfEnvRosInterface(EdfInterface):
 #     def __init__(self, env: UR5Env, monitor_refresh_rate: float = 0):
