@@ -71,3 +71,31 @@ def encode_pc(points: np.ndarray, colors: np.ndarray) -> np.ndarray:
     pc['b'] = colors[:,2]
 
     return pc
+
+def decode_pc(cloud_array, remove_nans=True, dtype=np.float64):
+    '''
+    Pulls out points (x,y,z) and colors (r,g,b) form encoded point cloud array. 
+    Codes borrowed and modified from ros_numpy: https://github.com/eric-wieser/ros_numpy/blob/master/src/ros_numpy/point_cloud2.py
+    
+    Shape:
+    - points: (N, 3)
+    - colors: (N, 3)
+    '''
+    # remove crap points
+    if remove_nans:
+        mask = np.isfinite(cloud_array['x']) & np.isfinite(cloud_array['y']) & np.isfinite(cloud_array['z']) & np.isfinite(cloud_array['r']) & np.isfinite(cloud_array['g']) & np.isfinite(cloud_array['b'])
+        cloud_array = cloud_array[mask]
+    
+    # pull out x, y, and z values
+    points = np.zeros(cloud_array.shape + (3,), dtype=dtype)
+    points[...,0] = cloud_array['x']
+    points[...,1] = cloud_array['y']
+    points[...,2] = cloud_array['z']
+    
+    # pull out r, g, and b values
+    colors = np.zeros(cloud_array.shape + (3,), dtype=dtype)
+    colors[...,0] = cloud_array['r']
+    colors[...,1] = cloud_array['g']
+    colors[...,2] = cloud_array['b']
+
+    return points, colors

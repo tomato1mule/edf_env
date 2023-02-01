@@ -3,7 +3,7 @@
 import rospy
 
 from edf_env.env import UR5Env, MugEnv
-from edf_env.ros_interface import UR5EnvRos
+from edf_env.ros_env import UR5EnvRos
 
 def run():
     env = MugEnv(use_gui=True)
