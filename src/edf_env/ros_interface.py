@@ -19,11 +19,13 @@ from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryF
 from trajectory_msgs.msg import JointTrajectory
 from geometry_msgs.msg import TransformStamped, Pose
 
-
 from edf_env.env import UR5Env
 from edf_env.pc_utils import encode_pc
 from edf_env.interface import EdfInterface
 from edf_env.utils import CamData
+
+import ros_edf
+from ros_edf.srv import UpdatePointCloud, UpdatePointCloudRequest, UpdatePointCloudResponse
 
 
 
@@ -50,6 +52,7 @@ class UR5EnvRos():
         self.monitor_img_pubs = []
         for i in range(len(self.env.monitor_cam_configs)):
             self.monitor_img_pubs.append(rospy.Publisher(f"monitor_img_{i}", Image, latch=False, queue_size=10))
+        self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', UpdatePointCloud, self.update_scene_pc_srv_callback)
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
@@ -190,13 +193,24 @@ class UR5EnvRos():
         msg.header = header
         pub.publish(msg)
 
+    def update_scene_pc_srv_callback(self, request: UpdatePointCloudRequest) -> UpdatePointCloudResponse:
+        self.update_scene_pc_msg()
+        self.publish_scene_pc()
+
+        result = UpdatePointCloudResponse.SUCCESS
+        response = UpdatePointCloudResponse()
+        response.result = result
+
+        return response
+
 
 
 
 class EdfMoveitInterface():
-    def __init__(self):
-        moveit_commander.roscpp_initialize(sys.argv)
-        rospy.init_node('edf_moveit_interface', anonymous=True)
+    def __init__(self, init_node = False, moveit_commander_argv = sys.argv):
+        moveit_commander.roscpp_initialize(moveit_commander_argv)
+        if init_node:
+            rospy.init_node('edf_moveit_interface', anonymous=True)
 
         self.robot_com = moveit_commander.RobotCommander()
         self.scene_intf = moveit_commander.PlanningSceneInterface()
@@ -249,33 +263,58 @@ class EdfMoveitInterface():
 
         return result
 
-# class EdfEnvRosInterface(EdfInterface):
-#     def __init__(self, env: UR5Env, monitor_refresh_rate: float = 0):
-#         self.ros_handle = UR5EnvRosHandle(env=env, monitor_refresh_rate=monitor_refresh_rate)
 
-#     def observe_scene(self, obs_type: str ='pointcloud', update: bool = True) -> Union[Tuple[np.ndarray, np.ndarray], List[CamData]]:
-#         if obs_type == 'pointcloud':
-#             if update:
-#                 self.ros_handle.update_scene_pc_msg()
-#             return self.ros_handle.scene_points, self.ros_handle.scene_colors
-#         elif obs_type == 'image':
-#             return self.ros_handle.env.observe_scene()
-#         else:
-#             raise ValueError("Wrong observation type is given.")
 
-#     def observe_ee(self, obs_type: str ='pointcloud', update: bool = True):
-#         raise NotImplementedError
+
+class EdfEnvRosInterface(EdfInterface):
+    def __init__(self):
+        rospy.init_node('edf_env_ros_interface', anonymous=True)
+        self.moveit_interface = EdfMoveitInterface(init_node=False, moveit_commander_argv=sys.argv)
+        self.request_scene_pc_update = rospy.ServiceProxy('update_scene_pointcloud', UpdatePointCloud)
+        self.min_gripper_val = 0.0
+        self.max_gripper_val = 0.7 #0.725
+
+    def observe_scene(self, obs_type: str ='pointcloud', update: bool = True) -> Union[Tuple[np.ndarray, np.ndarray], List[CamData]]:
+        if obs_type == 'pointcloud':
+            if update:
+                update_result = self.request_scene_pc_update()
+            return update_result
+        elif obs_type == 'image':
+            raise NotImplementedError
+        else:
+            raise ValueError("Wrong observation type is given.")
+
+    def observe_ee(self, obs_type: str ='pointcloud', update: bool = True):
+        raise NotImplementedError
         
-#     def pick(self, poses: np.ndarray) -> List[bool]:
-#         assert poses.ndim == 2 and poses.shape[-1] == 7 # [[qw,qx,qy,qz,x,y,z], ...]
+    def move_to_target_pose(self, poses: np.ndarray) -> Tuple[List[bool], np.ndarray]:
+        assert poses.ndim == 2 and poses.shape[-1] == 7 # [[qw,qx,qy,qz,x,y,z], ...]
 
-#         results = []
-#         for pose in poses:
-#             result_ = self.ros_handle.move_to_pose(pos=pose[4:], orn=pose[:4], versor_comes_first=True)
-#             results.append(result_)
-#             if result_ is True:
-#                 break
-#         return results
+        results = []
+        for pose in poses:
+            result_ = self.moveit_interface.move_to_pose(pos=pose[4:], orn=pose[:4], versor_comes_first=True)
+            results.append(result_)
+            if result_ is True:
+                result_pose = pose.copy()
+                break
+        return results, result_pose
 
-#     def place(self, poses):
-#         raise NotImplementedError
+    def grasp(self) -> bool:
+        grasp_result = self.moveit_interface.control_gripper(gripper_val=self.max_gripper_val)
+        return grasp_result
+
+    def pick(self, target_poses: np.ndarray) -> List[bool]:
+        assert target_poses.ndim == 2 and target_poses.shape[-1] == 7 # [[qw,qx,qy,qz,x,y,z], ...]
+
+        pre_grasp_result, grasp_pose = self.move_to_target_pose(poses = target_poses)
+        grasp_result: bool = self.grasp()
+        post_grasp_poses = grasp_pose.reshape(1,7)
+        post_grasp_poses[..., 4:] += np.array([0.0, 0.0, 0.1])
+        post_grasp_result, final_pose = self.move_to_target_pose(poses = post_grasp_poses)
+        
+
+        return pre_grasp_result
+
+
+    def place(self, poses):
+        raise NotImplementedError
