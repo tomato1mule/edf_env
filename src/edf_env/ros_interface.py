@@ -18,14 +18,15 @@ from std_msgs.msg import Header, Duration
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryFeedback, FollowJointTrajectoryResult, JointTolerance
 from trajectory_msgs.msg import JointTrajectory
 from geometry_msgs.msg import TransformStamped, Pose
+from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
+# from ros_edf.srv import UpdatePointCloud, UpdatePointCloudRequest, UpdatePointCloudResponse
 
 from edf_env.env import UR5Env
 from edf_env.pc_utils import encode_pc
 from edf_env.interface import EdfInterface
 from edf_env.utils import CamData
 
-import ros_edf
-from ros_edf.srv import UpdatePointCloud, UpdatePointCloudRequest, UpdatePointCloudResponse
+
 
 
 
@@ -52,7 +53,9 @@ class UR5EnvRos():
         self.monitor_img_pubs = []
         for i in range(len(self.env.monitor_cam_configs)):
             self.monitor_img_pubs.append(rospy.Publisher(f"monitor_img_{i}", Image, latch=False, queue_size=10))
-        self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', UpdatePointCloud, self.update_scene_pc_srv_callback)
+        # self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', UpdatePointCloud, self.update_scene_pc_srv_callback)
+        self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', Empty, self.update_scene_pc_srv_callback)
+        self.clear_octomap = rospy.ServiceProxy('clear_octomap', Empty)
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
@@ -193,15 +196,22 @@ class UR5EnvRos():
         msg.header = header
         pub.publish(msg)
 
-    def update_scene_pc_srv_callback(self, request: UpdatePointCloudRequest) -> UpdatePointCloudResponse:
+    # def update_scene_pc_srv_callback(self, request: UpdatePointCloudRequest) -> UpdatePointCloudResponse:
+    #     self.update_scene_pc_msg()
+    #     self.publish_scene_pc()
+
+    #     result = UpdatePointCloudResponse.SUCCESS
+    #     response = UpdatePointCloudResponse()
+    #     response.result = result
+
+    #     return response
+    def update_scene_pc_srv_callback(self, request: EmptyRequest) -> EmptyResponse:
         self.update_scene_pc_msg()
         self.publish_scene_pc()
+        time.sleep(0.1)
+        self.clear_octomap()
 
-        result = UpdatePointCloudResponse.SUCCESS
-        response = UpdatePointCloudResponse()
-        response.result = result
-
-        return response
+        return EmptyResponse()
 
 
 
@@ -270,15 +280,17 @@ class EdfEnvRosInterface(EdfInterface):
     def __init__(self):
         rospy.init_node('edf_env_ros_interface', anonymous=True)
         self.moveit_interface = EdfMoveitInterface(init_node=False, moveit_commander_argv=sys.argv)
-        self.request_scene_pc_update = rospy.ServiceProxy('update_scene_pointcloud', UpdatePointCloud)
+        # self.request_scene_pc_update = rospy.ServiceProxy('update_scene_pointcloud', UpdatePointCloud)
+        self.request_scene_pc_update = rospy.ServiceProxy('update_scene_pointcloud', Empty)
         self.min_gripper_val = 0.0
-        self.max_gripper_val = 0.7 #0.725
+        self.max_gripper_val = 0.725
 
     def observe_scene(self, obs_type: str ='pointcloud', update: bool = True) -> Union[Tuple[np.ndarray, np.ndarray], List[CamData]]:
         if obs_type == 'pointcloud':
             if update:
-                update_result = self.request_scene_pc_update()
-            return update_result
+                self.request_scene_pc_update()
+
+            return True
         elif obs_type == 'image':
             raise NotImplementedError
         else:
@@ -303,17 +315,20 @@ class EdfEnvRosInterface(EdfInterface):
         grasp_result = self.moveit_interface.control_gripper(gripper_val=self.max_gripper_val)
         return grasp_result
 
-    def pick(self, target_poses: np.ndarray) -> List[bool]:
+    def pick(self, target_poses: np.ndarray) -> Tuple[List[bool], np.ndarray, bool, List[bool], np.ndarray]:
         assert target_poses.ndim == 2 and target_poses.shape[-1] == 7 # [[qw,qx,qy,qz,x,y,z], ...]
 
-        pre_grasp_result, grasp_pose = self.move_to_target_pose(poses = target_poses)
+        pre_grasp_results, grasp_pose = self.move_to_target_pose(poses = target_poses)
         grasp_result: bool = self.grasp()
         post_grasp_poses = grasp_pose.reshape(1,7)
-        post_grasp_poses[..., 4:] += np.array([0.0, 0.0, 0.1])
-        post_grasp_result, final_pose = self.move_to_target_pose(poses = post_grasp_poses)
+
+        N_candidate_post_grasp = 5
+        post_grasp_poses = np.tile(post_grasp_poses, (N_candidate_post_grasp,1))
+        post_grasp_poses[:,-1] += np.linspace(0.3, 0.1, N_candidate_post_grasp)
+        post_grasp_results, final_pose = self.move_to_target_pose(poses = post_grasp_poses)
         
 
-        return pre_grasp_result
+        return pre_grasp_results, grasp_pose, grasp_result, post_grasp_results, final_pose
 
 
     def place(self, poses):
