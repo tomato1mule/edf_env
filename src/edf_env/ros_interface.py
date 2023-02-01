@@ -103,7 +103,7 @@ class EdfRosInterface(EdfInterface):
         self.update_scene_pc_flag = False
         self.scene_pc_raw = None
         self.scene_pc = None
-        self.update_scene_pc(request_update=False, timeout_sec=5.0)
+        self.update_scene_pc(request_update=False, timeout_sec=10.0)
 
 
     def _scene_pc_callback(self, data: PointCloud2):
