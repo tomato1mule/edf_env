@@ -35,7 +35,7 @@ class BulletEnv():
         self.use_gui = use_gui
         with HideOutput():                     # To prevent verbose Pybullet details from being printed.
             if use_gui:
-                self.physicsClientId: int = p.connect(p.GUI, options='--width=500 --height=500')
+                self.physicsClientId: int = p.connect(p.GUI, options='--width=800 --height=1000')
             else:
                 self.physicsClientId: int = p.connect(p.DIRECT)
         if use_gui:

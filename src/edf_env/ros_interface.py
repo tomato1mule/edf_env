@@ -31,13 +31,11 @@ from edf_env.utils import CamData
 
 
 
-class UR5EnvRosHandle():
+class UR5EnvRos():
     def __init__(self, env: UR5Env, monitor_refresh_rate: float = 0):
         self.env: UR5Env = env
 
-        self.current_traj: Optional[JointTrajectory] = None
-        self.scene_points: Optional[np.ndarray] = None
-        self.scene_colors: Optional[np.ndarray] = None
+        # self.current_traj: Optional[JointTrajectory] = None
         self.scene_pc_msg: Optional[PointCloud2] = None 
 
         
@@ -52,8 +50,6 @@ class UR5EnvRosHandle():
         self.monitor_img_pubs = []
         for i in range(len(self.env.monitor_cam_configs)):
             self.monitor_img_pubs.append(rospy.Publisher(f"monitor_img_{i}", Image, latch=False, queue_size=10))
-
-        moveit_commander.roscpp_initialize(sys.argv)
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
@@ -70,19 +66,6 @@ class UR5EnvRosHandle():
         self.update_scene_pc_msg()
         for thread in self.threads:
             thread.start()
-
-        time.sleep(1)
-        self.robot_com = moveit_commander.RobotCommander()
-        self.scene_intf = moveit_commander.PlanningSceneInterface()
-        self.arm_group_name = "arm"
-        self.arm_group = moveit_commander.MoveGroupCommander(self.arm_group_name)
-        self.arm_group.set_planner_id("BiTRRT")
-        self.arm_group.set_planning_time(0.5)
-        self.arm_group.set_pose_reference_frame('map')
-
-        self.gripper_group_name = "gripper"
-        self.gripper_group = moveit_commander.MoveGroupCommander(self.gripper_group_name)
-        self.gripper_group.set_planning_time(0.5)
 
 
     def close(self):
@@ -167,8 +150,6 @@ class UR5EnvRosHandle():
             self.arm_ctrl_AS.publish_feedback(feedback)
             #r.sleep()
 
-
-
         if success:
             result = FollowJointTrajectoryResult()
             rospy.loginfo(f"{self.arm_ctrl_AS_name}: Succeeded")
@@ -178,8 +159,8 @@ class UR5EnvRosHandle():
         stamp = rospy.Time.now()
         frame_id = 'map'
 
-        self.scene_points, self.scene_colors = self.env.observe_scene_pc()
-        pc = encode_pc(points=self.scene_points, colors=self.scene_colors)
+        points, colors = self.env.observe_scene_pc()
+        pc = encode_pc(points=points, colors=colors)
         self.scene_pc_msg: PointCloud2 = array_to_pointcloud2(cloud_arr = pc, stamp=stamp, frame_id=frame_id)
 
     def publish_scene_pc(self):
@@ -208,6 +189,26 @@ class UR5EnvRosHandle():
         header.stamp = rospy.Time.now()
         msg.header = header
         pub.publish(msg)
+
+
+
+
+class EdfMoveitInterface():
+    def __init__(self):
+        moveit_commander.roscpp_initialize(sys.argv)
+        rospy.init_node('edf_moveit_interface', anonymous=True)
+
+        self.robot_com = moveit_commander.RobotCommander()
+        self.scene_intf = moveit_commander.PlanningSceneInterface()
+        self.arm_group_name = "arm"
+        self.arm_group = moveit_commander.MoveGroupCommander(self.arm_group_name)
+        self.arm_group.set_planner_id("BiTRRT")
+        self.arm_group.set_planning_time(0.5)
+        self.arm_group.set_pose_reference_frame('map')
+
+        self.gripper_group_name = "gripper"
+        self.gripper_group = moveit_commander.MoveGroupCommander(self.gripper_group_name)
+        self.gripper_group.set_planning_time(0.5)
 
     def plan_pose(self, pos: np.ndarray, orn: np.ndarray,
                   versor_comes_first: bool = False) -> Tuple[bool, Any, float, int]:
@@ -238,36 +239,35 @@ class UR5EnvRosHandle():
             rospy.loginfo(f"Plan failed. ErrorCode: {error_code}")
             self.arm_group.stop()
             return False
+
+
+# class EdfEnvRosInterface(EdfInterface):
+#     def __init__(self, env: UR5Env, monitor_refresh_rate: float = 0):
+#         self.ros_handle = UR5EnvRosHandle(env=env, monitor_refresh_rate=monitor_refresh_rate)
+
+#     def observe_scene(self, obs_type: str ='pointcloud', update: bool = True) -> Union[Tuple[np.ndarray, np.ndarray], List[CamData]]:
+#         if obs_type == 'pointcloud':
+#             if update:
+#                 self.ros_handle.update_scene_pc_msg()
+#             return self.ros_handle.scene_points, self.ros_handle.scene_colors
+#         elif obs_type == 'image':
+#             return self.ros_handle.env.observe_scene()
+#         else:
+#             raise ValueError("Wrong observation type is given.")
+
+#     def observe_ee(self, obs_type: str ='pointcloud', update: bool = True):
+#         raise NotImplementedError
         
+#     def pick(self, poses: np.ndarray) -> List[bool]:
+#         assert poses.ndim == 2 and poses.shape[-1] == 7 # [[qw,qx,qy,qz,x,y,z], ...]
 
+#         results = []
+#         for pose in poses:
+#             result_ = self.ros_handle.move_to_pose(pos=pose[4:], orn=pose[:4], versor_comes_first=True)
+#             results.append(result_)
+#             if result_ is True:
+#                 break
+#         return results
 
-class EdfEnvRosInterface(EdfInterface):
-    def __init__(self, env: UR5Env, monitor_refresh_rate: float = 0):
-        self.ros_handle = UR5EnvRosHandle(env=env, monitor_refresh_rate=monitor_refresh_rate)
-
-    def observe_scene(self, obs_type: str ='pointcloud', update: bool = True) -> Union[Tuple[np.ndarray, np.ndarray], List[CamData]]:
-        if obs_type == 'pointcloud':
-            if update:
-                self.ros_handle.update_scene_pc_msg()
-            return self.ros_handle.scene_points, self.ros_handle.scene_colors
-        elif obs_type == 'image':
-            return self.ros_handle.env.observe_scene()
-        else:
-            raise ValueError("Wrong observation type is given.")
-
-    def observe_ee(self, obs_type: str ='pointcloud', update: bool = True):
-        raise NotImplementedError
-        
-    def pick(self, poses: np.ndarray) -> List[bool]:
-        assert poses.ndim == 2 and poses.shape[-1] == 7 # [[qw,qx,qy,qz,x,y,z], ...]
-
-        results = []
-        for pose in poses:
-            result_ = self.ros_handle.move_to_pose(pos=pose[4:], orn=pose[:4], versor_comes_first=True)
-            results.append(result_)
-            if result_ is True:
-                break
-        return results
-
-    def place(self, poses):
-        raise NotImplementedError
+#     def place(self, poses):
+#         raise NotImplementedError

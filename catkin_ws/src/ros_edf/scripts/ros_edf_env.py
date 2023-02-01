@@ -3,11 +3,11 @@
 import rospy
 
 from edf_env.env import UR5Env, MugEnv
-from edf_env.ros_wrapper import UR5EnvRosHandle
+from edf_env.ros_interface import UR5EnvRos
 
 def run():
     env = MugEnv(use_gui=True)
-    env_ros = UR5EnvRosHandle(env=env, monitor_refresh_rate=0)
+    env_ros = UR5EnvRos(env=env, monitor_refresh_rate=0)
     rospy.spin()
 
 
