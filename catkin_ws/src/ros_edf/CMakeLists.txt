@@ -11,7 +11,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  message_generation
+  sensor_msgs
+  control_msgs
+  trajectory_msgs
+  geometry_msgs
+  std_srvs
+  moveit_commander
+  ros_numpy
+  # message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -55,10 +62,10 @@ catkin_python_setup()
 # )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  UpdatePointCloud.srv
-)
+# add_service_files(
+#   FILES
+#   UpdatePointCloud.srv
+# )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -68,10 +75,10 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

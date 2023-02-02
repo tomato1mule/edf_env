@@ -11,15 +11,12 @@ import tf2_ros
 from ros_numpy.point_cloud2 import array_to_pointcloud2
 from ros_numpy.image import numpy_to_image
 
-import moveit_commander
-
 from sensor_msgs.msg import JointState, PointCloud2, Image
 from std_msgs.msg import Header, Duration
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryFeedback, FollowJointTrajectoryResult, JointTolerance
 from trajectory_msgs.msg import JointTrajectory
 from geometry_msgs.msg import TransformStamped, Pose
 from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
-# from ros_edf.srv import UpdatePointCloud, UpdatePointCloudRequest, UpdatePointCloudResponse
 
 from edf_env.env import UR5Env
 from edf_env.pc_utils import encode_pc

@@ -4,11 +4,11 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="edf_benchmark",
+    name="edf_env",
     version="0.0.1",
     author="Hyunwoo Ryu",
     author_email="tomato1mule@gmail.com",
-    description="Equivariant Descriptor Fields (EDFs) with Pybullet benchmark environment and ROS MoveIt support.",
+    description="Pybullet environment for EDF.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/tomato1mule/edf_env",
@@ -20,10 +20,20 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: Ubuntu 22.04",
     ],
-    package_dir={"edf_env": "src/edf_env"},
-    packages=['edf_env'],
-    include_package_data=True,
     python_requires="<3.9",
     install_requires=[
+        'numpy==1.23.5',
+        'scipy==1.10.0',
+        'pybullet==3.2.0',
+        'pandas==1.5.2',
+        'open3d==0.16.0',
+        'pyyaml',        # 6.0
+        'tqdm',          # 4.64.1
+        'jupyter',       # 1.0.0
+        'plotly',        # 5.12.0
+        'mypy',
+        'nb_mypy',
+        'types-PyYAML',
+        'pyassimp'       # 4.1.4
     ]
 )
