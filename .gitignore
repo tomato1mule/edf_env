@@ -1,7 +1,5 @@
 # Custom
 .vscode
-catkin_ws/devel
-catkin_ws/.catkin_workspace
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
