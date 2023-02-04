@@ -39,9 +39,9 @@ class UR5EnvRos():
         self.scene_pc_msg: Optional[PointCloud2] = None 
 
         
-        self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False, queue_size=10)
+        self.joint_pub = rospy.Publisher('joint_states', JointState, latch=False, queue_size=1)
         self.scene_pc_pub = rospy.Publisher('scene_pointcloud', PointCloud2, latch=False, queue_size=1)
-        self.base_link_tf_broadcaster = tf2_ros.TransformBroadcaster()
+        self.tf_broadcaster = tf2_ros.TransformBroadcaster()
         self.arm_ctrl_AS_name = 'arm_controller/follow_joint_trajectory'
         self.arm_ctrl_AS = actionlib.SimpleActionServer(self.arm_ctrl_AS_name, FollowJointTrajectoryAction,
                                                               execute_cb = self.execute_cb, auto_start = False)                                                           
@@ -49,7 +49,7 @@ class UR5EnvRos():
         self.monitor_refresh_rate = monitor_refresh_rate
         self.monitor_img_pubs = []
         for i in range(len(self.env.monitor_cam_configs)):
-            self.monitor_img_pubs.append(rospy.Publisher(f"monitor_img_{i}", Image, latch=False, queue_size=10))
+            self.monitor_img_pubs.append(rospy.Publisher(f"monitor_img_{i}", Image, latch=False, queue_size=1))
         # self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', UpdatePointCloud, self.update_scene_pc_srv_callback)
         self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', Empty, self.update_scene_pc_srv_callback)
         self.clear_octomap = rospy.ServiceProxy('clear_octomap', Empty)
@@ -95,6 +95,7 @@ class UR5EnvRos():
         rate = rospy.Rate(20) 
         while not rospy.is_shutdown():
             self.publish_base_link_tf()
+            self.publish_scene_tf()
             rate.sleep()
 
     def pcpub_thread(self):
@@ -184,7 +185,20 @@ class UR5EnvRos():
         t.transform.translation.x,  t.transform.translation.y, t.transform.translation.z = pos
         t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w = orn
 
-        self.base_link_tf_broadcaster.sendTransform(t)
+        self.tf_broadcaster.sendTransform(t)
+
+    def publish_scene_tf(self):
+        pos, orn = self.env.get_scene_pose()
+        
+        t = TransformStamped()
+
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = "map"
+        t.child_frame_id = "scene"
+        t.transform.translation.x,  t.transform.translation.y, t.transform.translation.z = pos
+        t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w = orn
+
+        self.tf_broadcaster.sendTransform(t)
 
     def publish_image(self, img: np.ndarray, pub: rospy.Publisher):
         msg = numpy_to_image(arr=img, encoding="rgb8")

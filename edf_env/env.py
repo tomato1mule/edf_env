@@ -316,6 +316,11 @@ class UR5Env(BulletEnv):
     def get_base_pose(self):
         pos, orn = p.getBasePositionAndOrientation(bodyUniqueId = self.robot_id, physicsClientId = self.physicsClientId)
         return pos, orn
+    
+    def get_scene_pose(self):
+        pos = self.scene_center
+        orn = [0., 0., 0., 1.]
+        return pos, orn
 
     def init_robot_pose(self):
         for config in self.robot_joint_init:
