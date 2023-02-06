@@ -19,7 +19,7 @@ from edf_env.pc_utils import pcd_from_numpy
 
 
 class BulletEnv():
-    def __init__(self, use_gui: bool = True, sim_freq: float = 1000):
+    def __init__(self, use_gui: bool = True, sim_freq: float = 1000, debug: bool = False):
         """A template class of pybullet environment.
 
         Args:
@@ -39,8 +39,9 @@ class BulletEnv():
             else:
                 self.physicsClientId: int = p.connect(p.DIRECT)
         if use_gui:
-            p.configureDebugVisualizer(flag = p.COV_ENABLE_MOUSE_PICKING, enable = 0)
-            p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+            if not debug:
+                p.configureDebugVisualizer(flag = p.COV_ENABLE_MOUSE_PICKING, enable = 0)
+                p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
         self.sim_freq: float = sim_freq
         self.init_task()
 
@@ -94,7 +95,8 @@ class UR5Env(BulletEnv):
                  monitor_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/monitor_camera_config.yaml'),
                  robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5_robotiq.urdf'), 
                  use_gui: bool = True, 
-                 sim_freq: float = 1000):
+                 sim_freq: float = 1000,
+                 debug: bool = False):
         """Pybullet environment with UR5 Robot
 
         Args:
@@ -113,7 +115,7 @@ class UR5Env(BulletEnv):
             self.grasp_cam_configs: A list of pybullet camera configurations for observing robot's hand (to see how the robot is gripping the object).
 
         """
-        super().__init__(use_gui=use_gui, sim_freq=sim_freq)
+        super().__init__(use_gui=use_gui, sim_freq=sim_freq, debug=debug)
         
         self.load_env_config(config_path=env_config_path)
 
@@ -172,6 +174,7 @@ class UR5Env(BulletEnv):
         if self.robot_base_pose_init['orn'] is None:
             self.robot_base_pose_init['orn'] = np.array([0.0, 0.0, 0.0, 1.0])
         self.robot_joint_init = robot_config['robot_joint_init']
+        self.end_effector_link_id = robot_config['end_effector_link_id']
 
         table_config: Dict[str, Any] = config['table_config']
         if table_config['spawn'] == True:
@@ -194,6 +197,11 @@ class UR5Env(BulletEnv):
         else:
             raise NotImplementedError
         self.scene_voxel_filter_size = scene_config['pc_voxel_filter_size']
+
+        grasp_config: Dict[str, Any] = config['grasp_config']
+        self.grasp_ranges: np.ndarray = np.array(grasp_config['grasp_ranges']) # [[x_min, x_max], [y_min, y_max], [z_min, z_max]];  Shape: (3,2)
+        self.grasp_voxel_filter_size = grasp_config['pc_voxel_filter_size']
+
 
     def load_robot(self, urdf_path: str) -> int:
         """Loads list of pybullet camera configs from yaml file path."""
@@ -241,6 +249,51 @@ class UR5Env(BulletEnv):
             voxel_filter_size = self.scene_voxel_filter_size
 
         points, colors, pc_seg, cam_data_list = self.observe_scene(return_seg = segmented, color_encoding = "float")
+        if segmented is True:
+            raise NotImplementedError
+        pcd = pcd_from_numpy(coord=points, color=colors, voxel_filter_size = voxel_filter_size)
+        
+        return np.asarray(pcd.points), np.asarray(pcd.colors)
+    
+    def observe_grasp(self, stride: Union[np.ndarray, list, tuple] = (1,1), return_seg: bool = False, color_encoding: str = "float") -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], List[CamData]]:
+        """Get point cloud and camera observation data of the end_effector.
+
+        Returns:
+            1) point cloud 3d-coordinate
+            2) point cloud color
+            3) point cloud segmentation (optional)
+            4) list of raw camera data (See See :func:`get_pybullet_cam_data` for details)
+
+            Shape::
+
+                - coord (np.ndarray): (N_points, 3)
+                - color (np.ndarray): (N_points, 3)
+                - seg (np.ndarray[int] or None): (N_points)
+
+        Args:
+            stride: (np.ndarray, list or tuple): Stride of sampling points from images. (1,1) means dense sampling.
+
+            Shape::
+
+                - stride: (2,) 
+
+        """
+        assert self.grasp_cam_configs, "Grasp camera configuration is not assigned."
+
+        grasp_pos, grasp_orn = self.get_link_pose(link_id=self.end_effector_link_id)
+        grasp_pos, grasp_orn = np.array(grasp_pos), np.array(grasp_orn)
+        cam_data_list: List[CamData] = self.observe_cams(cam_configs=self.grasp_cam_configs, target_pos=grasp_pos, return_seg=return_seg, color_encoding=color_encoding)
+        pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.grasp_ranges, stride=stride, frame=(grasp_pos, grasp_orn))
+        pc_coord = Rotation.from_quat(grasp_orn).inv().apply(pc_coord - grasp_pos)
+
+        return pc_coord, pc_color, pc_seg, cam_data_list
+
+    def observe_grasp_pc(self, voxel_filter_size: Optional[float] = None, segmented: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+        """DOCSTRING TODO"""
+        if voxel_filter_size is None:
+            voxel_filter_size = self.grasp_voxel_filter_size
+
+        points, colors, pc_seg, cam_data_list = self.observe_grasp(return_seg = segmented, color_encoding = "float")
         if segmented is True:
             raise NotImplementedError
         pcd = pcd_from_numpy(coord=points, color=colors, voxel_filter_size = voxel_filter_size)
@@ -315,6 +368,10 @@ class UR5Env(BulletEnv):
 
     def get_base_pose(self):
         pos, orn = p.getBasePositionAndOrientation(bodyUniqueId = self.robot_id, physicsClientId = self.physicsClientId)
+        return pos, orn
+    
+    def get_link_pose(self, link_id: int):
+        pos, orn = p.getLinkState(self.robot_id, link_id, physicsClientId = self.physicsClientId)[:2]
         return pos, orn
     
     def get_scene_pose(self):
@@ -445,7 +502,8 @@ class MugEnv(UR5Env):
                  monitor_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/monitor_camera_config.yaml'),
                  robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5_robotiq.urdf'), 
                  use_gui: bool = True, 
-                 sim_freq: float = 1000):
+                 sim_freq: float = 1000,
+                 debug: bool = False):
         """Pybullet environment with UR5 Robot and a mug with hanger
 
         Args:
@@ -465,7 +523,7 @@ class MugEnv(UR5Env):
 
         """
 
-        super().__init__(env_config_path=env_config_path, scene_cam_config_path=scene_cam_config_path, grasp_cam_config_path=grasp_cam_config_path, monitor_cam_config_path=monitor_cam_config_path, robot_path=robot_path, use_gui=use_gui, sim_freq=sim_freq)
+        super().__init__(env_config_path=env_config_path, scene_cam_config_path=scene_cam_config_path, grasp_cam_config_path=grasp_cam_config_path, monitor_cam_config_path=monitor_cam_config_path, robot_path=robot_path, use_gui=use_gui, sim_freq=sim_freq, debug=debug)
         self.mug_id = self.spawn_mug('train_0', pos = self.scene_center + np.array([0, 0, 0.1]), scale = 1.5)
 
         for _ in range(1000):

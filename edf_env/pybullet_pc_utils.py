@@ -1,6 +1,7 @@
 from typing import Union, Optional, Type, TypedDict, List, Dict, Tuple
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 from edf_env.utils import CamData
 
@@ -101,7 +102,7 @@ def get_inrange_indices(pos: np.ndarray, ranges: np.ndarray) -> np.ndarray:
     return (((pos[:,0] > xlim[0]) * (pos[:,0] < xlim[1])) * ((pos[:,1] > ylim[0]) * (pos[:,1] < ylim[1])) * ((pos[:,2] > zlim[0]) * (pos[:,2] < zlim[1]))).nonzero()[0]     # Only the points inside the given range is returned.
 
 
-def rgbd_to_pc(cam_data: CamData, pix_coord_WH: np.ndarray, ranges: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+def rgbd_to_pc(cam_data: CamData, pix_coord_WH: np.ndarray, ranges: Optional[np.ndarray] = None, frame: Optional[Tuple[np.ndarray, np.ndarray]] = None) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
     """Get the point cloud from single Pybullet camera data.
        The points are ampled from specified pixels (pix_coord_WH).
 
@@ -118,6 +119,7 @@ def rgbd_to_pc(cam_data: CamData, pix_coord_WH: np.ndarray, ranges: Optional[np.
         cam_data (CamData): Pybullet camera data. See :func:`get_pybullet_cam_data` for details.
         pix_coord_WH (np.ndarray): Image frame coordinates (col, row) of pixels that the points should be sampled. Beware that it is not (row, col)!
         ranges: (np.ndarray or None): X,Y,Z box ranges of the point cloud. Any point outside this range would be discarded.
+        frame ((np.ndarray, np.ndarray) or None): (pos, orn) of a reference frame. Shape: ((3,), (4,))
 
         Shape::
 
@@ -129,6 +131,8 @@ def rgbd_to_pc(cam_data: CamData, pix_coord_WH: np.ndarray, ranges: Optional[np.
     W, H, image, depth, seg = cam_data['W'], cam_data['H'], cam_data['color'], cam_data['depth'], cam_data['seg']
     cam_view_matrix, cam_projection_matrix = cam_data['view'], cam_data['proj']
     pos = get_position(pix_coord_WH, depth, cam_view_matrix, cam_projection_matrix)
+    if frame is not None:
+        pos = Rotation.from_quat(frame[1]).inv().apply(pos - frame[0])
 
     if ranges is not None:
         inrage_indices = get_inrange_indices(pos, ranges)
@@ -144,7 +148,7 @@ def rgbd_to_pc(cam_data: CamData, pix_coord_WH: np.ndarray, ranges: Optional[np.
 
     return coord, color, seg
 
-def pb_cams_to_pc(cam_data_list: List[CamData], ranges: Optional[Union[np.ndarray, list, tuple]] = None, stride: Union[np.ndarray, list, tuple] = (1,1)) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+def pb_cams_to_pc(cam_data_list: List[CamData], ranges: Optional[Union[np.ndarray, list, tuple]] = None, stride: Union[np.ndarray, list, tuple] = (1,1), frame: Optional[Tuple[np.ndarray, np.ndarray]] = None) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
     """Get point cloud from multiple Pybullet cam data.
 
     Returns:
@@ -160,6 +164,7 @@ def pb_cams_to_pc(cam_data_list: List[CamData], ranges: Optional[Union[np.ndarra
         cam_data_list (List[CamData]): List of camera data. See :func:`get_pybullet_cam_data` for details as to individual camera data.
         ranges: (np.ndarray, list, tuple or None): X,Y,Z box ranges of the point cloud. Any point outside this range would be discarded.
         stride: (np.ndarray, list or tuple): Stride of sampling points from images. (1,1) means dense sampling.
+        frame ((np.ndarray, np.ndarray) or None): (pos, orn) of a reference frame. Shape: ((3,), (4,))
 
         Shape::
 
@@ -175,7 +180,7 @@ def pb_cams_to_pc(cam_data_list: List[CamData], ranges: Optional[Union[np.ndarra
         W, H = cam_data['W'], cam_data['H']
         pix_coord_WH = np.stack(np.meshgrid(np.arange(0, W, stride[1]),np.arange(0, H, stride[0]))).reshape(2,-1).T
 
-        coord, color, seg = rgbd_to_pc(cam_data=cam_data, pix_coord_WH=pix_coord_WH, ranges=ranges)
+        coord, color, seg = rgbd_to_pc(cam_data=cam_data, pix_coord_WH=pix_coord_WH, ranges=ranges, frame=frame)
 
         poses.append(coord)
         colors.append(color)

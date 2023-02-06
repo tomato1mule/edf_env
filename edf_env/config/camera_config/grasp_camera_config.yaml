@@ -1,8 +1,8 @@
 # Cam 0 Config
 - distance: 0.3
   ypr: [90, 40, 0]
-  W: 480
-  H: 360
+  W: 640
+  H: 480
   up: [0., 0., 1.]
   up_axis_idx: 2
   near: 0.01
@@ -12,8 +12,8 @@
 # Cam 1 Config
 - distance: 0.3
   ypr: [225, 40, 0]
-  W: 480
-  H: 360
+  W: 640
+  H: 480
   up: [0., 0., 1.]
   up_axis_idx: 2
   near: 0.01
@@ -23,8 +23,8 @@
 # Cam 2 Config
 - distance: 0.3
   ypr: [315, 40, 0]
-  W: 480
-  H: 360
+  W: 640
+  H: 480
   up: [0., 0., 1.]
   up_axis_idx: 2
   near: 0.01
@@ -34,8 +34,8 @@
 # Cam 3 Config
 - distance: 0.3
   ypr: [90, -40, 0]
-  W: 480
-  H: 360
+  W: 640
+  H: 480
   up: [0., 0., 1.]
   up_axis_idx: 2
   near: 0.01
@@ -45,8 +45,8 @@
 # Cam 4 Config
 - distance: 0.3
   ypr: [225, -40, 0]
-  W: 480
-  H: 360
+  W: 640
+  H: 480
   up: [0., 0., 1.]
   up_axis_idx: 2
   near: 0.01
@@ -56,8 +56,8 @@
 # Cam 5 Config
 - distance: 0.3
   ypr: [315, -40, 0]
-  W: 480
-  H: 360
+  W: 640
+  H: 480
   up: [0., 0., 1.]
   up_axis_idx: 2
   near: 0.01

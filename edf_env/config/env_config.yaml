@@ -4,6 +4,10 @@ scene_config:
   relative_range: True
   pc_voxel_filter_size: 0.003
 
+grasp_config:
+  grasp_ranges: [[-0.2, 0.2],[-0.2, 0.2],[0.0, 0.4]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
+  pc_voxel_filter_size: 0.003
+
 robot_config: 
   robot_base_pose_init:
     pos: [-0.7, 0.0, 0.0]
@@ -21,6 +25,7 @@ robot_config:
     value: -1.6315
   - name: "ur_arm_wrist_3_joint" 
     value: 0
+  end_effector_link_id: 26  # joint 26:  ur_arm_flange-tool0  =>  child link = link 26 = ur_arm_tool0  =>  <end_effector name="robotiq_gripper" parent_link="ur_arm_tool0" group="gripper" parent_group="arm"/>
   
 table_config:
   spawn: True

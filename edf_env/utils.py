@@ -144,7 +144,7 @@ def observe_cams(cam_configs: List[CamConfig], target_pos: Optional[np.ndarray] 
 
 # code borrowed from cvshah:   https://github.com/bulletphysics/bullet3/discussions/3867
 
-def pb_draw_axis(pos: np.ndarray, orn: Optional[np.ndarray] = None, orn_format: Optional[str] = None, bodyId: Optional[int] = 1, linkId: int = -1, physicsClientId: int = 0) -> List[int]:
+def pb_draw_axis(pos: np.ndarray, orn: Optional[np.ndarray] = None, orn_format: Optional[str] = None, bodyId: Optional[int] = None, linkId: int = -1, physicsClientId: int = 0) -> List[int]:
     """ Draws pybullet axis of the given pose """
     if orn is None:
         orn = np.eye(3)
