@@ -659,10 +659,8 @@
         <mesh
           filename="meshes/robotiq/robotiq_85_base_link_fine.stl" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.1 0.1 0.1 1" />
+      <material name="LightGrey">
+        <color rgba="0.7 0.7 0.7 1.0"/>
       </material>
     </visual>
     <collision>
@@ -755,10 +753,8 @@
         <mesh
           filename="meshes/robotiq/outer_finger_fine.stl" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.1 0.1 0.1 1" />
+      <material name="LightGrey">
+        <color rgba="0.7 0.7 0.7 1.0"/>
       </material>
     </visual>
     <collision>
@@ -868,10 +864,8 @@
         <mesh
           filename="meshes/robotiq/inner_finger_fine.stl" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.1 0.1 0.1 1" />
+      <material name="LightGrey">
+        <color rgba="0.7 0.7 0.7 1.0"/>
       </material>
     </visual>
     <collision>
@@ -990,10 +984,8 @@
         <mesh
           filename="meshes/robotiq/inner_finger_fine.stl" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.1 0.1 0.1 1" />
+      <material name="LightGrey">
+        <color rgba="0.7 0.7 0.7 1.0"/>
       </material>
     </visual>
     <collision>
@@ -1112,10 +1104,8 @@
         <mesh
           filename="meshes/robotiq/outer_finger_fine.stl" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.1 0.1 0.1 1" />
+      <material name="LightGrey">
+        <color rgba="0.7 0.7 0.7 1.0"/>
       </material>
     </visual>
     <collision>
