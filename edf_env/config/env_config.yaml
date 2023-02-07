@@ -1,11 +1,17 @@
+name_config:
+  world_frame_name: "map"
+  scene_frame_name: "scene"
+  ee_frame_name: "end_effector"
+  base_frame_name: "base_link"
+
 scene_config:
   scene_center: [-0.2, 0.0, 0.0]
   scene_ranges: [[-0.3, 0.3],[-0.3, 0.3],[-0.0, 0.6]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
   relative_range: True
   pc_voxel_filter_size: 0.003
 
-grasp_config:
-  grasp_ranges: [[-0.2, 0.2],[-0.2, 0.2],[0.0, 0.4]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
+ee_config:
+  ee_ranges: [[-0.15, 0.15],[-0.15, 0.15],[0.0, 0.3]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
   pc_voxel_filter_size: 0.003
 
 robot_config: 
