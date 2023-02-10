@@ -293,3 +293,18 @@ def load_joints_info(body_id: int, physicsClientId: int = 0) -> Tuple[Dict[Union
 
     return joint_dict, joint_type_dict, n_joints
 
+def load_links_info(body_id: int, physicsClientId: int = 0) -> Tuple[Dict[Union[str, int], Union[str, int]], int]:
+    # https://github.com/bulletphysics/bullet3/pull/1082
+
+    link_dict = {p.getBodyInfo(body_id)[0].decode('UTF-8'): -1,  
+                 -1: p.getBodyInfo(body_id)[0].decode('UTF-8')}
+            
+    for _id in range(p.getNumJoints(body_id)):
+        _name = p.getJointInfo(body_id, _id)[12].decode('UTF-8')
+        link_dict[_name] = _id
+        link_dict[_id] = _name
+
+    n_links = p.getNumJoints(body_id) + 1
+
+    return link_dict, n_links
+    

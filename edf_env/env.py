@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 import yaml
 
 import edf_env
-from edf_env.utils import HideOutput, observe_cams, CamData, CamConfig, load_yaml, load_joints_info
+from edf_env.utils import HideOutput, observe_cams, CamData, CamConfig, load_yaml, load_joints_info, load_links_info
 from edf_env.pybullet_pc_utils import pb_cams_to_pc
 from edf_env.pc_utils import pcd_from_numpy
 
@@ -122,6 +122,8 @@ class UR5Env(BulletEnv):
         ############ Load robot ################################################
         self.robot_id: int = self.load_robot(urdf_path=robot_path)
         self.robot_joint_dict, self.robot_joint_type_dict, self.n_joints = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
+        self.robot_links_dict, self.n_robot_links = load_links_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
+        self.end_effector_link_id = self.robot_links_dict[self.end_effector_link_name]
         self.init_robot_pose()
 
         # self.movable_joint_ids = []                    # Idx: Movable joint idx (0~5) || Val: Pybullet jointId (0~27)
@@ -180,7 +182,7 @@ class UR5Env(BulletEnv):
         if self.robot_base_pose_init['orn'] is None:
             self.robot_base_pose_init['orn'] = np.array([0.0, 0.0, 0.0, 1.0])
         self.robot_joint_init = robot_config['robot_joint_init']
-        self.end_effector_link_id = robot_config['end_effector_link_id']
+        self.end_effector_link_name = robot_config['end_effector_link_name']
 
         table_config: Dict[str, Any] = config['table_config']
         if table_config['spawn'] == True:
