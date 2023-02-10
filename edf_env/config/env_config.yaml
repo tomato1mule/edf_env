@@ -1,7 +1,7 @@
 name_config:
   world_frame_name: "map"
   scene_frame_name: "scene"
-  ee_frame_name: "end_effector"
+  eef_frame_name: "end_effector"
   base_frame_name: "base_link"
 
 scene_config:
@@ -10,8 +10,8 @@ scene_config:
   relative_range: True
   pc_voxel_filter_size: 0.003
 
-ee_config:
-  ee_ranges: [[-0.15, 0.15],[-0.15, 0.15],[0.0, 0.3]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
+eef_config:
+  eef_ranges: [[-0.15, 0.15],[-0.15, 0.15],[0.0, 0.3]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
   pc_voxel_filter_size: 0.003
 
 robot_config: 

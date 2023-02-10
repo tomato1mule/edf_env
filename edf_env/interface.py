@@ -5,7 +5,7 @@ class EdfInterface():
     def observe_scene(self, obs_type: str ='pointcloud', update: bool = True):
         raise NotImplementedError
 
-    def observe_ee(self, obs_type: str ='pointcloud', update: bool = True):
+    def observe_eef(self, obs_type: str ='pointcloud', update: bool = True):
         raise NotImplementedError
 
     def pick(self, poses):

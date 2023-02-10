@@ -91,7 +91,7 @@ class UR5Env(BulletEnv):
     def __init__(self, 
                  env_config_path: str = os.path.join(edf_env.ROOT_DIR, 'config/env_config.yaml'), 
                  scene_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/scene_camera_config.yaml'), 
-                 ee_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/ee_camera_config.yaml'), 
+                 eef_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/eef_camera_config.yaml'), 
                  monitor_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/monitor_camera_config.yaml'),
                  robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5_robotiq.urdf'), 
                  use_gui: bool = True, 
@@ -102,7 +102,7 @@ class UR5Env(BulletEnv):
         Args:
             env_config_path: Path to the pybullet environment configuration file.
             scene_cam_config_path: Path to the camera configuration file for scene observation.
-            ee_cam_config_path: Path to the camera configuration file for observing robot's hand (to see how the robot is gripping the object).
+            eef_cam_config_path: Path to the camera configuration file for observing robot's hand (to see how the robot is gripping the object).
             robot_path: Path to the robot description file (in URDF format).
             use_gui (bool): If True, Pybullet would run with visual server. Otherewise would run with headless mode.
             sim_freq: fps of simulation (e.g.  sim_freq=1000 means 1000 simulation steps per 1 second in simulated time).
@@ -112,7 +112,7 @@ class UR5Env(BulletEnv):
             self.sim_freq (float): fps of simulation (e.g.  sim_freq=1000 means 1000 simulation steps per 1 second in simulated time).
             self.plane_id (int): Pybullet body id of the plane (ground).
             self.scene_cam_configs: A list of pybullet camera configurations for scene observation.
-            self.ee_cam_configs: A list of pybullet camera configurations for observing robot's hand (to see how the robot is gripping the object).
+            self.eef_cam_configs: A list of pybullet camera configurations for observing robot's hand (to see how the robot is gripping the object).
 
         """
         super().__init__(use_gui=use_gui, sim_freq=sim_freq, debug=debug)
@@ -151,10 +151,10 @@ class UR5Env(BulletEnv):
         else:
             self.scene_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=scene_cam_config_path)
 
-        if ee_cam_config_path is None:
-            self.ee_cam_configs = None
+        if eef_cam_config_path is None:
+            self.eef_cam_configs = None
         else:
-            self.ee_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=ee_cam_config_path)
+            self.eef_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=eef_cam_config_path)
 
         if monitor_cam_config_path is None:
             self.monitor_cam_configs = None
@@ -172,7 +172,7 @@ class UR5Env(BulletEnv):
         name_config: Dict[str, Any] = config['name_config']
         self.world_frame_name = name_config['world_frame_name']
         self.scene_frame_name = name_config['scene_frame_name']
-        self.ee_frame_name = name_config['ee_frame_name']
+        self.eef_frame_name = name_config['eef_frame_name']
         self.base_frame_name = name_config['base_frame_name']
 
         robot_config: Dict[str, Any] = config['robot_config']
@@ -206,9 +206,9 @@ class UR5Env(BulletEnv):
             raise NotImplementedError
         self.scene_voxel_filter_size = scene_config['pc_voxel_filter_size']
 
-        ee_config: Dict[str, Any] = config['ee_config']
-        self.ee_ranges: np.ndarray = np.array(ee_config['ee_ranges']) # [[x_min, x_max], [y_min, y_max], [z_min, z_max]];  Shape: (3,2)
-        self.ee_voxel_filter_size = ee_config['pc_voxel_filter_size']
+        eef_config: Dict[str, Any] = config['eef_config']
+        self.eef_ranges: np.ndarray = np.array(eef_config['eef_ranges']) # [[x_min, x_max], [y_min, y_max], [z_min, z_max]];  Shape: (3,2)
+        self.eef_voxel_filter_size = eef_config['pc_voxel_filter_size']
 
 
     def load_robot(self, urdf_path: str) -> int:
@@ -263,7 +263,7 @@ class UR5Env(BulletEnv):
         
         return np.asarray(pcd.points), np.asarray(pcd.colors)
     
-    def observe_ee(self, stride: Union[np.ndarray, list, tuple] = (1,1), return_seg: bool = False, color_encoding: str = "float") -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], List[CamData]]:
+    def observe_eef(self, stride: Union[np.ndarray, list, tuple] = (1,1), return_seg: bool = False, color_encoding: str = "float") -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], List[CamData]]:
         """Get point cloud and camera observation data of the end_effector.
 
         Returns:
@@ -286,21 +286,21 @@ class UR5Env(BulletEnv):
                 - stride: (2,) 
 
         """
-        assert self.ee_cam_configs, "Grasp camera configuration is not assigned."
+        assert self.eef_cam_configs, "Grasp camera configuration is not assigned."
 
-        ee_pos, ee_orn = self.get_link_pose(link_id=self.end_effector_link_id)
-        ee_pos, ee_orn = np.array(ee_pos), np.array(ee_orn)
-        cam_data_list: List[CamData] = self.observe_cams(cam_configs=self.ee_cam_configs, target_pos=ee_pos, return_seg=return_seg, color_encoding=color_encoding)
-        pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.ee_ranges, stride=stride, frame=(ee_pos, ee_orn))
+        eef_pos, eef_orn = self.get_link_pose(link_id=self.end_effector_link_id)
+        eef_pos, eef_orn = np.array(eef_pos), np.array(eef_orn)
+        cam_data_list: List[CamData] = self.observe_cams(cam_configs=self.eef_cam_configs, target_pos=eef_pos, return_seg=return_seg, color_encoding=color_encoding)
+        pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.eef_ranges, stride=stride, frame=(eef_pos, eef_orn))
 
         return pc_coord, pc_color, pc_seg, cam_data_list
 
-    def observe_ee_pc(self, voxel_filter_size: Optional[float] = None, segmented: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    def observe_eef_pc(self, voxel_filter_size: Optional[float] = None, segmented: bool = False) -> Tuple[np.ndarray, np.ndarray]:
         """DOCSTRING TODO"""
         if voxel_filter_size is None:
-            voxel_filter_size = self.ee_voxel_filter_size
+            voxel_filter_size = self.eef_voxel_filter_size
 
-        points, colors, pc_seg, cam_data_list = self.observe_ee(return_seg = segmented, color_encoding = "float")
+        points, colors, pc_seg, cam_data_list = self.observe_eef(return_seg = segmented, color_encoding = "float")
         if segmented is True:
             raise NotImplementedError
         pcd = pcd_from_numpy(coord=points, color=colors, voxel_filter_size = voxel_filter_size)
@@ -505,7 +505,7 @@ class MugEnv(UR5Env):
     def __init__(self, 
                  env_config_path: str = os.path.join(edf_env.ROOT_DIR, 'config/env_config.yaml'), 
                  scene_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/scene_camera_config.yaml'), 
-                 ee_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/ee_camera_config.yaml'), 
+                 eef_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/eef_camera_config.yaml'), 
                  monitor_cam_config_path: Optional[str] = os.path.join(edf_env.ROOT_DIR, 'config/camera_config/monitor_camera_config.yaml'),
                  robot_path: str = os.path.join(edf_env.ROOT_DIR, 'robot/ridgeback_ur5/ridgeback_ur5_robotiq.urdf'), 
                  use_gui: bool = True, 
@@ -516,7 +516,7 @@ class MugEnv(UR5Env):
         Args:
             env_config_path: Path to the pybullet environment configuration file.
             scene_cam_config_path: Path to the camera configuration file for scene observation.
-            ee_cam_config_path: Path to the camera configuration file for observing robot's hand (to see how the robot is gripping the object).
+            eef_cam_config_path: Path to the camera configuration file for observing robot's hand (to see how the robot is gripping the object).
             robot_path: Path to the robot description file (in URDF format).
             use_gui (bool): If True, Pybullet would run with visual server. Otherewise would run with headless mode.
             sim_freq: fps of simulation (e.g.  sim_freq=1000 means 1000 simulation steps per 1 second in simulated time).
@@ -526,11 +526,11 @@ class MugEnv(UR5Env):
             self.sim_freq (float): fps of simulation (e.g.  sim_freq=1000 means 1000 simulation steps per 1 second in simulated time).
             self.plane_id (int): Pybullet body id of the plane (ground).
             self.scene_cam_configs: A list of pybullet camera configurations for scene observation.
-            self.ee_cam_configs: A list of pybullet camera configurations for observing robot's hand (to see how the robot is gripping the object).
+            self.eef_cam_configs: A list of pybullet camera configurations for observing robot's hand (to see how the robot is gripping the object).
 
         """
 
-        super().__init__(env_config_path=env_config_path, scene_cam_config_path=scene_cam_config_path, ee_cam_config_path=ee_cam_config_path, monitor_cam_config_path=monitor_cam_config_path, robot_path=robot_path, use_gui=use_gui, sim_freq=sim_freq, debug=debug)
+        super().__init__(env_config_path=env_config_path, scene_cam_config_path=scene_cam_config_path, eef_cam_config_path=eef_cam_config_path, monitor_cam_config_path=monitor_cam_config_path, robot_path=robot_path, use_gui=use_gui, sim_freq=sim_freq, debug=debug)
         self.mug_id = self.spawn_mug('train_0', pos = self.scene_center + np.array([0, 0, 0.1]), scale = 1.5)
 
         for _ in range(1000):
