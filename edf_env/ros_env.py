@@ -99,7 +99,6 @@ class UR5EnvRos():
         while not rospy.is_shutdown():
             self.publish_base_link_tf()
             self.publish_scene_tf()
-            self.publish_eef_link_tf()
             rate.sleep()
 
     def scene_pcpub_thread(self):
@@ -179,7 +178,7 @@ class UR5EnvRos():
 
     def update_eef_pc_msg(self):
         stamp = rospy.Time.now()
-        frame_id = self.env.eef_frame_name
+        frame_id = self.env.end_effector_link_name
 
         points, colors = self.env.observe_eef_pc()
         pc = encode_pc(points=points, colors=colors)
@@ -207,19 +206,6 @@ class UR5EnvRos():
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = self.env.world_frame_name
         t.child_frame_id = self.env.base_frame_name
-        t.transform.translation.x,  t.transform.translation.y, t.transform.translation.z = pos
-        t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w = orn
-
-        self.tf_broadcaster.sendTransform(t)
-
-    def publish_eef_link_tf(self):
-        pos, orn = self.env.get_link_pose(link_id=self.env.end_effector_link_id)
-        
-        t = TransformStamped()
-
-        t.header.stamp = rospy.Time.now()
-        t.header.frame_id = self.env.world_frame_name
-        t.child_frame_id = self.env.eef_frame_name
         t.transform.translation.x,  t.transform.translation.y, t.transform.translation.z = pos
         t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w = orn
 

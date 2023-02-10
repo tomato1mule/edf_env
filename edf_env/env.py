@@ -172,7 +172,6 @@ class UR5Env(BulletEnv):
         name_config: Dict[str, Any] = config['name_config']
         self.world_frame_name = name_config['world_frame_name']
         self.scene_frame_name = name_config['scene_frame_name']
-        self.eef_frame_name = name_config['eef_frame_name']
         self.base_frame_name = name_config['base_frame_name']
 
         robot_config: Dict[str, Any] = config['robot_config']

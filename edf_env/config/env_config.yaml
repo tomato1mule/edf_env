@@ -1,7 +1,6 @@
 name_config:
   world_frame_name: "map"
   scene_frame_name: "scene"
-  eef_frame_name: "end_effector"
   base_frame_name: "base_link"
 
 scene_config:
