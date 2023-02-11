@@ -43,10 +43,14 @@ class BulletEnv():
                 p.configureDebugVisualizer(flag = p.COV_ENABLE_MOUSE_PICKING, enable = 0)
                 p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
         self.sim_freq: float = sim_freq
-        self.init_task()
 
-    def init_task(self):
-        """Initialize task environment."""
+        if type(self) == BulletEnv:
+            self.reset()
+
+    def reset(self, seed: Optional[int] = None):
+        """Reset task environment."""
+        self.rng: np.random._generator.Generator = np.random.default_rng(seed=seed)
+        p.resetSimulation(physicsClientId=self.physicsClientId)
 
         p.setAdditionalSearchPath(pybullet_data.getDataPath())                                      # Search for default assets directory.
         p.setGravity(0,0,-10, physicsClientId = self.physicsClientId)
@@ -115,12 +119,24 @@ class UR5Env(BulletEnv):
             self.eef_cam_configs: A list of pybullet camera configurations for observing robot's hand (to see how the robot is gripping the object).
 
         """
+
+        self.env_config_path: str = env_config_path
+        self.scene_cam_config_path: Optional[str] = scene_cam_config_path
+        self.eef_cam_config_path: Optional[str] = eef_cam_config_path
+        self.monitor_cam_config_path: Optional[str] = monitor_cam_config_path
+        self.robot_path: str = robot_path
+
         super().__init__(use_gui=use_gui, sim_freq=sim_freq, debug=debug)
-        
-        self.load_env_config(config_path=env_config_path)
+        if type(self) == UR5Env:
+            self.reset()
+
+    def reset(self, seed: Optional[int] = None):
+        super().reset(seed=seed)
+
+        self.load_env_config(config_path=self.env_config_path)
 
         ############ Load robot ################################################
-        self.robot_id: int = self.load_robot(urdf_path=robot_path)
+        self.robot_id: int = self.load_robot(urdf_path=self.robot_path)
         self.robot_joint_dict, self.robot_joint_type_dict, self.n_joints = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
         self.robot_links_dict, self.n_robot_links = load_links_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
         self.end_effector_link_id = self.robot_links_dict[self.end_effector_link_name]
@@ -146,20 +162,20 @@ class UR5Env(BulletEnv):
 
 
         ############ Load camera configurations ################################################
-        if scene_cam_config_path is None:
+        if self.scene_cam_config_path is None:
             self.scene_cam_configs = None
         else:
-            self.scene_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=scene_cam_config_path)
+            self.scene_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=self.scene_cam_config_path)
 
-        if eef_cam_config_path is None:
+        if self.eef_cam_config_path is None:
             self.eef_cam_configs = None
         else:
-            self.eef_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=eef_cam_config_path)
+            self.eef_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=self.eef_cam_config_path)
 
-        if monitor_cam_config_path is None:
+        if self.monitor_cam_config_path is None:
             self.monitor_cam_configs = None
         else:
-            self.monitor_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=monitor_cam_config_path)
+            self.monitor_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=self.monitor_cam_config_path)
             debug_config = self.monitor_cam_configs[0]
             p.resetDebugVisualizerCamera(cameraDistance = debug_config['distance'], cameraYaw = debug_config['ypr'][0], cameraPitch = debug_config['ypr'][1], cameraTargetPosition = self.scene_center, physicsClientId=self.physicsClientId)
         #########################################################################################
@@ -530,13 +546,32 @@ class MugEnv(UR5Env):
         """
 
         super().__init__(env_config_path=env_config_path, scene_cam_config_path=scene_cam_config_path, eef_cam_config_path=eef_cam_config_path, monitor_cam_config_path=monitor_cam_config_path, robot_path=robot_path, use_gui=use_gui, sim_freq=sim_freq, debug=debug)
-        self.mug_id = self.spawn_mug('train_0', pos = self.scene_center + np.array([0, 0, 0.1]), scale = 1.5)
+        
+        if type(self) == MugEnv:
+            self.reset()
+
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger'):
+        super().reset(seed=seed)
+
+        self.mug_id = self.spawn_mug(mug_name=mug_name, 
+                                     pos = self.scene_center + np.array([0, 0, 0.1]), 
+                                     scale = 1.5)
+        self.hanger_id = self.spawn_hanger(hanger_name=hanger_name, 
+                                           pos = self.scene_center + np.array([0.27, 0, 0.]), 
+                                           orn = np.array([0, 0, 1, 0]),
+                                           scale = 1.0)
 
         for _ in range(1000):
             self.step()
 
     def spawn_mug(self, mug_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0) -> int:
+        self.mug_scate = scale
         if orn is None:
-            return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug/{mug_name}.urdf"), basePosition=pos, globalScaling=scale, physicsClientId = self.physicsClientId)
-        
-        raise NotImplementedError
+            orn = np.array([0, 0, 0, 1])
+        return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug/{mug_name}.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId)
+
+    def spawn_hanger(self, hanger_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0):
+        self.hanger_scale = scale
+        if orn is None:
+            orn = np.array([0, 0, 0, 1])
+        self.hanger_id = p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/hanger/{hanger_name}.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
