@@ -33,7 +33,9 @@ from edf_env.utils import CamData
 
 class UR5EnvRos():
     def __init__(self, env: UR5Env, monitor_refresh_rate: float = 0):
+        self.env_seed = None
         self.env: UR5Env = env
+        self.env_ready = True
 
         # self.current_traj: Optional[JointTrajectory] = None
         self.scene_pc_msg: Optional[PointCloud2] = None 
@@ -55,6 +57,7 @@ class UR5EnvRos():
         # self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', UpdatePointCloud, self.update_scene_pc_srv_callback)
         self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', Empty, self.update_scene_pc_srv_callback)
         self.update_eef_pc_server = rospy.Service('update_eef_pointcloud', Empty, self.update_eef_pc_srv_callback)
+        self.reset_env = rospy.Service('reset_env', Empty, self.reset_env_srv_callback)
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
@@ -84,33 +87,38 @@ class UR5EnvRos():
         while not rospy.is_shutdown():
             imgs = [cam_dat['color'] for cam_dat in self.env.observe_monitor_img(return_seg=False, color_encoding='uint8')]
             for img, pub in zip(imgs, self.monitor_img_pubs):
-                self.publish_image(img=img, pub=pub)
+                if self.env_ready:
+                    self.publish_image(img=img, pub=pub)
             rate.sleep()
 
     def jointpub_thread(self):
         # TODO:  https://stackoverflow.com/questions/50907224/not-able-to-terminate-the-process-in-multiprocessing-python-linux
         rate = rospy.Rate(20) # 10hz
         while not rospy.is_shutdown():
-            self.publish_joint_info()
+            if self.env_ready:
+                self.publish_joint_info()
             rate.sleep()
 
     def tfpub_thread(self):
         rate = rospy.Rate(20) 
         while not rospy.is_shutdown():
-            self.publish_base_link_tf()
-            self.publish_scene_tf()
+            if self.env_ready:
+                self.publish_base_link_tf()
+                self.publish_scene_tf()
             rate.sleep()
 
     def scene_pcpub_thread(self):
         rate = rospy.Rate(2) 
         while not rospy.is_shutdown():
-            self.publish_scene_pc()
+            if self.env_ready:
+                self.publish_scene_pc()
             rate.sleep()
 
     def eef_pcpub_thread(self):
         rate = rospy.Rate(2) 
         while not rospy.is_shutdown():
-            self.publish_eef_pc()
+            if self.env_ready:
+                self.publish_eef_pc()
             rate.sleep()
 
     def publish_joint_info(self):
@@ -128,6 +136,8 @@ class UR5EnvRos():
         self.joint_pub.publish(msg)
 
     def execute_cb(self, goal):
+        assert self.env_ready
+        
         trajectory: JointTrajectory = goal.trajectory
         path_tolerance: JointTolerance = goal.path_tolerance
         goal_tolerance: JointTolerance = goal.goal_tolerance
@@ -241,15 +251,32 @@ class UR5EnvRos():
 
     #     return response
     def update_scene_pc_srv_callback(self, request: EmptyRequest) -> EmptyResponse:
-        self.update_scene_pc_msg()
-        self.publish_scene_pc()
-        time.sleep(0.1)
+        if self.env_ready:
+            self.update_scene_pc_msg()
+            self.publish_scene_pc()
+            time.sleep(0.1)
+        else:
+            pass
 
         return EmptyResponse()
     
     def update_eef_pc_srv_callback(self, request: EmptyRequest) -> EmptyResponse:
-        self.update_eef_pc_msg()
-        self.publish_eef_pc()
-        time.sleep(0.1)
+        if self.env_ready:
+            self.update_eef_pc_msg()
+            self.publish_eef_pc()
+            time.sleep(0.1)
+        else:
+            pass
+
+        return EmptyResponse()
+    
+    def reset_env_srv_callback(self, request: EmptyRequest) -> EmptyResponse:
+        self.env_ready = False
+        self.env.reset(seed = self.env_seed)
+        self.eef_pc_msg = None
+        self.scene_pc_msg = None
+        self.env_ready = True
+        
+        self.update_scene_pc_srv_callback(request=EmptyRequest())
 
         return EmptyResponse()

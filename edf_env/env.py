@@ -47,7 +47,7 @@ class BulletEnv():
         if type(self) == BulletEnv:
             self.reset()
 
-    def reset(self, seed: Optional[int] = None):
+    def reset(self, seed: Optional[int] = None) -> bool:
         """Reset task environment."""
         self.rng: np.random._generator.Generator = np.random.default_rng(seed=seed)
         p.resetSimulation(physicsClientId=self.physicsClientId)
@@ -56,6 +56,8 @@ class BulletEnv():
         p.setGravity(0,0,-10, physicsClientId = self.physicsClientId)
         self.plane_id: int = p.loadURDF("plane.urdf", physicsClientId = self.physicsClientId)       # Spawn plane.
         p.setTimeStep(1/self.sim_freq)
+
+        return True
 
     def close(self):
         """Disconnect from the Pybullet server."""
@@ -130,7 +132,7 @@ class UR5Env(BulletEnv):
         if type(self) == UR5Env:
             self.reset()
 
-    def reset(self, seed: Optional[int] = None):
+    def reset(self, seed: Optional[int] = None) -> bool:
         super().reset(seed=seed)
 
         self.load_env_config(config_path=self.env_config_path)
@@ -180,6 +182,7 @@ class UR5Env(BulletEnv):
             p.resetDebugVisualizerCamera(cameraDistance = debug_config['distance'], cameraYaw = debug_config['ypr'][0], cameraPitch = debug_config['ypr'][1], cameraTargetPosition = self.scene_center, physicsClientId=self.physicsClientId)
         #########################################################################################
 
+        return True
        
     def load_env_config(self, config_path: str):
         """Loads environment config from yaml file path."""
@@ -550,7 +553,7 @@ class MugEnv(UR5Env):
         if type(self) == MugEnv:
             self.reset()
 
-    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger'):
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger') -> bool:
         super().reset(seed=seed)
 
         self.mug_id = self.spawn_mug(mug_name=mug_name, 
@@ -563,6 +566,8 @@ class MugEnv(UR5Env):
 
         for _ in range(1000):
             self.step()
+
+        return True
 
     def spawn_mug(self, mug_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0) -> int:
         self.mug_scate = scale
