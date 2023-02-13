@@ -19,7 +19,7 @@ def pcd_from_numpy(coord: np.ndarray, color: Optional[np.ndarray], voxel_filter_
 
     return pcd
 
-def pcd_to_numpy(pcd: o3d.cuda.pybind.geometry.PointCloud) -> Tuple[np.ndarray, np.ndarray]:
+def pcd_to_numpy(pcd: o3d.geometry.PointCloud) -> Tuple[np.ndarray, np.ndarray]:
     points = np.asarray(pcd.points)
     colors = np.asarray(pcd.colors)
 
