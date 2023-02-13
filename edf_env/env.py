@@ -227,6 +227,7 @@ class UR5Env(BulletEnv):
         eef_config: Dict[str, Any] = config['eef_config']
         self.eef_ranges: np.ndarray = np.array(eef_config['eef_ranges']) # [[x_min, x_max], [y_min, y_max], [z_min, z_max]];  Shape: (3,2)
         self.eef_voxel_filter_size = eef_config['pc_voxel_filter_size']
+        self.eef_grasp_point: np.ndarray = np.array(eef_config['grasp_point'])
 
 
     def load_robot(self, urdf_path: str) -> int:
@@ -308,7 +309,8 @@ class UR5Env(BulletEnv):
 
         eef_pos, eef_orn = self.get_link_pose(link_id=self.end_effector_link_id)
         eef_pos, eef_orn = np.array(eef_pos), np.array(eef_orn)
-        cam_data_list: List[CamData] = self.observe_cams(cam_configs=self.eef_cam_configs, target_pos=eef_pos, return_seg=return_seg, color_encoding=color_encoding)
+        target_pos = Rotation.from_quat(eef_orn).apply(self.eef_grasp_point) + eef_pos
+        cam_data_list: List[CamData] = self.observe_cams(cam_configs=self.eef_cam_configs, target_pos=target_pos, return_seg=return_seg, color_encoding=color_encoding)
         pc_coord, pc_color, pc_seg = pb_cams_to_pc(cam_data_list=cam_data_list, ranges=self.eef_ranges, stride=stride, frame=(eef_pos, eef_orn))
 
         return pc_coord, pc_color, pc_seg, cam_data_list
