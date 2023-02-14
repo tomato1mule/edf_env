@@ -20,7 +20,6 @@ from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
 
 from edf_env.env import UR5Env
 from edf_env.pc_utils import encode_pc
-from edf_env.interface import EdfInterface
 from edf_env.utils import CamData
 
 
