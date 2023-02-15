@@ -44,6 +44,10 @@ class BulletEnv():
                 p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
         self.sim_freq: float = sim_freq
 
+        # https://github.com/bulletphysics/bullet3/issues/1936
+        # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/switchConstraintSolver.py
+        p.setPhysicsEngineParameter(solverResidualThreshold=0.001, numSolverIterations=200, physicsClientId=self.physicsClientId)
+
         if type(self) == BulletEnv:
             self.reset()
 
