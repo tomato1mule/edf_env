@@ -161,7 +161,8 @@ class UR5Env(BulletEnv):
         
         # self.disable_gripper_self_collision()
         self.set_gripper_constraint()
-        self.grasp_constraint = None
+        self.grasp_constraint: List[int] = []
+        self.grasped_item: Optional[int] = None
         self.detach()
 
 
@@ -488,16 +489,17 @@ class UR5Env(BulletEnv):
             item_id = self.target_obj_id
 
         if self.grasp_check(item_id) is True:
-            if self.grasp_constraint is not None:
+            if not self.grasp_constraint:
                 return 'ALREADY_IN_GRASP'
             else:
-                body_pos, body_orn = p.getBasePositionAndOrientation(objectUniqueId=item_id, physicsClientId=self.physicsClientId)
+                grasp_constraint = []
+
+                body_pos, body_orn = p.getBasePositionAndOrientation(bodyUniqueId=item_id, physicsClientId=self.physicsClientId)
                 lfinger_pos, lfinger_orn = self.get_link_pose(link_id=self.robot_links_dict[self.lfinger_link_name])
                 rel_quat = Rotation.from_quat(lfinger_orn).inv() * Rotation.from_quat(body_orn)
-                rel_pos = rel_quat.apply(body_pos-lfinger_pos)
+                rel_pos = rel_quat.apply(np.array([body_pos])-np.array([lfinger_pos]))
                 rel_quat = rel_quat.as_quat()
-
-                self.grasp_constraint = p.createConstraint(parentBodyUniqueId=self.robot_id, 
+                grasp_constraint.append(p.createConstraint(parentBodyUniqueId=self.robot_id, 
                                                            parentLinkIndex=self.robot_links_dict[self.lfinger_link_name],
                                                            childBodyUniqueId=item_id,
                                                            childLinkIndex=-1,
@@ -508,17 +510,38 @@ class UR5Env(BulletEnv):
                                                            parentFrameOrientation=rel_quat,
                                                            childFrameOrientation=[0., 0., 0., 1.],
                                                            physicsClientId=self.physicsClientId)
-                
-                self.grasp_item = item_id
+                )
+
+                # body_pos, body_orn = p.getBasePositionAndOrientation(bodyUniqueId=item_id, physicsClientId=self.physicsClientId)
+                # rfinger_pos, rfinger_orn = self.get_link_pose(link_id=self.robot_links_dict[self.rfinger_link_name])
+                # rel_quat = Rotation.from_quat(rfinger_orn).inv() * Rotation.from_quat(body_orn)
+                # rel_pos = rel_quat.apply(np.array([body_pos])-np.array([rfinger_pos]))
+                # rel_quat = rel_quat.as_quat()
+                # grasp_constraint.append(p.createConstraint(parentBodyUniqueId=self.robot_id, 
+                #                                            parentLinkIndex=self.robot_links_dict[self.rfinger_link_name],
+                #                                            childBodyUniqueId=item_id,
+                #                                            childLinkIndex=-1,
+                #                                            jointType=p.JOINT_FIXED,
+                #                                            jointAxis=[0., 0., 0.],
+                #                                            parentFramePosition=rel_pos,
+                #                                            childFramePosition=[0., 0., 0.],
+                #                                            parentFrameOrientation=rel_quat,
+                #                                            childFrameOrientation=[0., 0., 0., 1.],
+                #                                            physicsClientId=self.physicsClientId)
+                # )
+
+                self.grasp_constraint = grasp_constraint
+                self.grasped_item = item_id
                 return 'SUCCESS'
         else:
             return 'FAIL'
 
     def detach(self) -> str:
-        if self.grasp_constraint is not None:
-            p.removeConstraint(self.grasp_constraint, physicsClientId=self.physicsClientId)
-            self.grasp_constraint = None
-            self.grasp_item = None
+        if self.grasp_constraint:
+            for constraint in self.grasp_constraint:
+                p.removeConstraint(constraint, physicsClientId=self.physicsClientId)
+            self.grasp_constraint = []
+            self.grasped_item = None
             return 'SUCCESS'
         else:
             return 'NO_ATTACHED_OBJ'

@@ -57,8 +57,8 @@ class UR5EnvRos():
         self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', Empty, self.update_scene_pc_srv_callback)
         self.update_eef_pc_server = rospy.Service('update_eef_pointcloud', Empty, self.update_eef_pc_srv_callback)
         self.reset_env = rospy.Service('reset_env', Empty, self.reset_env_srv_callback)
-        self.attach_srv = rospy.Service('attach_target_obj', Trigger, self.attach_srv_callback)
-        self.detach_srv = rospy.Service('detach_target_obj', Trigger, self.detach_srv_callback)
+        self.attach_srv = rospy.Service('env_attach_srv', Trigger, self.attach_srv_callback)
+        self.detach_srv = rospy.Service('env_detach_srv', Trigger, self.detach_srv_callback)
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
