@@ -131,6 +131,7 @@ class UR5Env(BulletEnv):
         self.eef_cam_config_path: Optional[str] = eef_cam_config_path
         self.monitor_cam_config_path: Optional[str] = monitor_cam_config_path
         self.robot_path: str = robot_path
+        self.target_obj_id: Optional[int] = None
 
         super().__init__(use_gui=use_gui, sim_freq=sim_freq, debug=debug)
         if type(self) == UR5Env:
@@ -160,6 +161,8 @@ class UR5Env(BulletEnv):
         
         # self.disable_gripper_self_collision()
         self.set_gripper_constraint()
+        self.grasp_constraint = None
+        self.detach()
 
 
         ############ Load table ################################################
@@ -205,6 +208,9 @@ class UR5Env(BulletEnv):
             self.robot_base_pose_init['orn'] = np.array([0.0, 0.0, 0.0, 1.0])
         self.robot_joint_init = robot_config['robot_joint_init']
         self.end_effector_link_name = robot_config['end_effector_link_name']
+        self.lfinger_link_name = robot_config['lfinger_link_name']
+        self.rfinger_link_name = robot_config['rfinger_link_name']
+
 
         table_config: Dict[str, Any] = config['table_config']
         if table_config['spawn'] == True:
@@ -469,6 +475,53 @@ class UR5Env(BulletEnv):
             constraints.append(c)
 
         return constraints
+    
+    def grasp_check(self, item_id: int) -> bool:
+        if (len(p.getContactPoints(self.robot_id, item_id, self.robot_links_dict[self.lfinger_link_name], -1)) > 0) and (len(p.getContactPoints(self.robot_id, item_id, self.robot_links_dict[self.rfinger_link_name], -1)) > 0):
+            return True
+        else:
+            return False
+
+    def attach(self, item_id: Optional[int]) -> str:
+        if item_id is None:
+            assert self.target_obj_id is not None, "UR5ENV.attach(item_id): item_id must be specified."
+            item_id = self.target_obj_id
+
+        if self.grasp_check(item_id) is True:
+            if self.grasp_constraint is not None:
+                return 'ALREADY_IN_GRASP'
+            else:
+                body_pos, body_orn = p.getBasePositionAndOrientation(objectUniqueId=item_id, physicsClientId=self.physicsClientId)
+                lfinger_pos, lfinger_orn = self.get_link_pose(link_id=self.robot_links_dict[self.lfinger_link_name])
+                rel_quat = Rotation.from_quat(lfinger_orn).inv() * Rotation.from_quat(body_orn)
+                rel_pos = rel_quat.apply(body_pos-lfinger_pos)
+                rel_quat = rel_quat.as_quat()
+
+                self.grasp_constraint = p.createConstraint(parentBodyUniqueId=self.robot_id, 
+                                                           parentLinkIndex=self.robot_links_dict[self.lfinger_link_name],
+                                                           childBodyUniqueId=item_id,
+                                                           childLinkIndex=-1,
+                                                           jointType=p.JOINT_FIXED,
+                                                           jointAxis=[0., 0., 0.],
+                                                           parentFramePosition=rel_pos,
+                                                           childFramePosition=[0., 0., 0.],
+                                                           parentFrameOrientation=rel_quat,
+                                                           childFrameOrientation=[0., 0., 0., 1.],
+                                                           physicsClientId=self.physicsClientId)
+                
+                self.grasp_item = item_id
+                return 'SUCCESS'
+        else:
+            return 'FAIL'
+
+    def detach(self) -> str:
+        if self.grasp_constraint is not None:
+            p.removeConstraint(self.grasp_constraint, physicsClientId=self.physicsClientId)
+            self.grasp_constraint = None
+            self.grasp_item = None
+            return 'SUCCESS'
+        else:
+            return 'NO_ATTACHED_OBJ'
 
     # def disable_gripper_self_collision(self):
     #     p.setCollisionFilterPair(self.robot_id, self.robot_id, self.robot_joint_dict['left_outer_finger_joint'], self.robot_joint_dict['left_inner_finger_joint'], 0, self.physicsClientId)
@@ -569,6 +622,7 @@ class MugEnv(UR5Env):
                                            pos = self.scene_center + np.array([0.27, 0, 0.]), 
                                            orn = np.array([0, 0, 1, 0]),
                                            scale = 1.0)
+        self.target_obj_id = self.mug_id
 
         for _ in range(1000):
             self.step()

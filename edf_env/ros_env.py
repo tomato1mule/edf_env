@@ -16,7 +16,7 @@ from std_msgs.msg import Header, Duration
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryFeedback, FollowJointTrajectoryResult, JointTolerance
 from trajectory_msgs.msg import JointTrajectory
 from geometry_msgs.msg import TransformStamped, Pose
-from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
+from std_srvs.srv import Empty, EmptyRequest, EmptyResponse, Trigger, TriggerRequest, TriggerResponse
 
 from edf_env.env import UR5Env
 from edf_env.pc_utils import encode_pc
@@ -57,6 +57,8 @@ class UR5EnvRos():
         self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', Empty, self.update_scene_pc_srv_callback)
         self.update_eef_pc_server = rospy.Service('update_eef_pointcloud', Empty, self.update_eef_pc_srv_callback)
         self.reset_env = rospy.Service('reset_env', Empty, self.reset_env_srv_callback)
+        self.attach_srv = rospy.Service('attach_target_obj', Trigger, self.attach_srv_callback)
+        self.detach_srv = rospy.Service('detach_target_obj', Trigger, self.detach_srv_callback)
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
@@ -279,3 +281,21 @@ class UR5EnvRos():
         self.update_scene_pc_srv_callback(request=EmptyRequest())
 
         return EmptyResponse()
+    
+    def attach_srv_callback(self, request: TriggerRequest) -> TriggerResponse:
+        result = self.env.attach(item_id=self.env.target_obj_id)
+        if result == 'ALREADY_IN_GRASP' or result == 'SUCCESS':
+            success = True
+        else:
+            success = False
+
+        return TriggerResponse(success=success, message=result)
+    
+    def detach_srv_callback(self, request: TriggerRequest) -> TriggerResponse:
+        result = self.env.detach()
+        if result == 'NO_ATTACHED_OBJ' or result == 'SUCCESS':
+            success = True
+        else:
+            success = False
+
+        return TriggerResponse(success=success, message=result)
