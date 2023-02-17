@@ -347,7 +347,7 @@ class UR5Env(BulletEnv):
             z_pos, z_vel = jstate[0], jstate[1]
             pos, vel = self._pris_to_rev_finger(z_disp=z_pos, x_disp=x_pos, right_finger=False), self._pris_to_rev_finger(z_disp=z_vel, x_disp=x_vel, right_finger=False)
             pos, vel = -pos, -vel
-        if name == 'finger_joint' or name == 'left_inner_finger_joint':
+        if name == 'left_inner_finger_joint':
             jstate = p.getJointState(bodyUniqueId = self.robot_id, jointIndex=self.robot_joint_dict['left_inner_finger_joint_fake'])
             x_pos, x_vel = jstate[0], jstate[1]
             jstate = p.getJointState(bodyUniqueId = self.robot_id, jointIndex=self.robot_joint_dict['left_finger_z_joint_fake'])
@@ -358,7 +358,7 @@ class UR5Env(BulletEnv):
             x_pos, x_vel = jstate[0], jstate[1]
             jstate = p.getJointState(bodyUniqueId = self.robot_id, jointIndex=self.robot_joint_dict['right_finger_z_joint_fake'])
             z_pos, z_vel = jstate[0], jstate[1]
-            pos, vel = self._pris_to_rev_finger(z_disp=z_pos, x_disp=x_pos, right_finger=False), self._pris_to_rev_finger(z_disp=z_vel, x_disp=x_vel, right_finger=False)
+            pos, vel = self._pris_to_rev_finger(z_disp=z_pos, x_disp=x_pos, right_finger=True), self._pris_to_rev_finger(z_disp=z_vel, x_disp=x_vel, right_finger=False)
         else:
             jstate = p.getJointState(bodyUniqueId = self.robot_id, jointIndex=joint_id)
             pos, vel = jstate[0], jstate[1]
@@ -418,7 +418,7 @@ class UR5Env(BulletEnv):
                 self._position_control(control_joint_IDs=[self.robot_joint_dict['left_inner_finger_joint']], target_pos=[pos])
                 self._position_control(control_joint_IDs=[self.robot_joint_dict['right_inner_finger_joint']], target_pos=[-pos])
 
-            if id == self.robot_joint_dict['left_inner_finger_joint']:
+            elif id == self.robot_joint_dict['left_inner_finger_joint']:
                 z_disp, x_disp = self._rev_to_pris_finger(angle=pos, right_finger=False)
 
                 p.setJointMotorControl2(bodyIndex = self.robot_id,
@@ -432,7 +432,7 @@ class UR5Env(BulletEnv):
                                         targetPosition = z_disp,
                                         physicsClientId=self.physicsClientId) 
                 
-            if id == self.robot_joint_dict['right_inner_finger_joint']:
+            elif id == self.robot_joint_dict['right_inner_finger_joint']:
                 z_disp, x_disp = self._rev_to_pris_finger(angle=pos, right_finger=True)
 
                 p.setJointMotorControl2(bodyIndex = self.robot_id,
@@ -466,7 +466,6 @@ class UR5Env(BulletEnv):
 
         current_pos, current_vel = self.get_joint_states()
         current_pos, current_vel = np.array(current_pos)[control_joint_IDs], np.array(current_vel)[control_joint_IDs] # Shape: (N_target_joints, 3), (N_target_joints, 3)
-        print(current_pos)
 
         for step in range(target_steps):
             r = step / target_steps
@@ -526,7 +525,7 @@ class UR5Env(BulletEnv):
 
     def set_gripper_constraint(self):
         constraints = []
-        # for _ in range(3):
+        # for _ in range(1):
         #     c = p.createConstraint(parentBodyUniqueId = self.robot_id,
         #                         parentLinkIndex = self.robot_joint_dict['left_outer_finger_joint'],
         #                         childBodyUniqueId = self.robot_id,
@@ -664,69 +663,54 @@ class UR5Env(BulletEnv):
     #     p.setCollisionFilterPair(self.robot_id, self.robot_id, self.robot_joint_dict['right_outer_finger_joint'], self.robot_joint_dict['right_inner_finger_joint'], 0, self.physicsClientId)
 
     def gripper_mimic_constraint(self, max_torque: float = 500):
-        # z_base = 0.07
-        # x_base = 0.014
-        # x_disp = p.getJointState(bodyUniqueId = self.robot_id, jointIndex = self.robot_joint_dict['left_inner_finger_joint_fake'], physicsClientId = self.physicsClientId)[0]
-        # z_disp = p.getJointState(bodyUniqueId = self.robot_id, jointIndex = self.robot_joint_dict['left_finger_z_joint_fake'], physicsClientId = self.physicsClientId)[0]
+        pos, _ = self._get_joint_state(joint_id=self.robot_joint_dict['left_inner_finger_joint'])
 
-        # nuckle_len = 0.056
-        # theta = np.arctan2((z_disp-z_base) / nuckle_len, (x_disp-x_base) / nuckle_len)
-        # pos = 0.63 - theta
-        # # print(f"mimic {pos}")
+        p.setJointMotorControl2(bodyIndex = self.robot_id,
+                                jointIndex = self.robot_joint_dict['finger_joint'],
+                                controlMode = p.POSITION_CONTROL,
+                                targetPosition = pos,
+                                physicsClientId = self.physicsClientId,
+                                force = max_torque
+                                )
+        p.setJointMotorControl2(bodyIndex = self.robot_id,
+                                jointIndex = self.robot_joint_dict['left_inner_knuckle_joint'],
+                                controlMode = p.POSITION_CONTROL,
+                                targetPosition = pos,
+                                physicsClientId = self.physicsClientId,
+                                force = max_torque
+                                )
+        p.setJointMotorControl2(bodyIndex = self.robot_id,
+                                jointIndex = self.robot_joint_dict['left_inner_finger_joint'],
+                                controlMode = p.POSITION_CONTROL,
+                                targetPosition = -pos,
+                                physicsClientId = self.physicsClientId,
+                                force = max_torque
+                                )
 
-        # p.setJointMotorControl2(bodyIndex = self.robot_id,
-        #                         jointIndex = self.robot_joint_dict['finger_joint'],
-        #                         controlMode = p.POSITION_CONTROL,
-        #                         targetPosition = pos,
-        #                         physicsClientId = self.physicsClientId,
-        #                         force = max_torque
-        #                         )
-        # p.setJointMotorControl2(bodyIndex = self.robot_id,
-        #                         jointIndex = self.robot_joint_dict['left_inner_knuckle_joint'],
-        #                         controlMode = p.POSITION_CONTROL,
-        #                         targetPosition = pos,
-        #                         physicsClientId = self.physicsClientId,
-        #                         force = max_torque
-        #                         )
-        # p.setJointMotorControl2(bodyIndex = self.robot_id,
-        #                         jointIndex = self.robot_joint_dict['left_inner_finger_joint'],
-        #                         controlMode = p.POSITION_CONTROL,
-        #                         targetPosition = -1 * pos,
-        #                         physicsClientId = self.physicsClientId,
-        #                         force = max_torque
-        #                         )
-        
-
-        # x_disp = p.getJointState(bodyUniqueId = self.robot_id, jointIndex = self.robot_joint_dict['right_inner_finger_joint_fake'], physicsClientId = self.physicsClientId)[0]
-        # z_disp = p.getJointState(bodyUniqueId = self.robot_id, jointIndex = self.robot_joint_dict['right_finger_z_joint_fake'], physicsClientId = self.physicsClientId)[0]
-
-        # nuckle_len = 0.056
-        # theta = np.arctan2(z_disp / nuckle_len, x_disp / nuckle_len)
-        # pos = - 0.63 - theta
+        pos, _ = self._get_joint_state(joint_id=self.robot_joint_dict['right_inner_finger_joint'])
 
 
-        # p.setJointMotorControl2(bodyIndex = self.robot_id,
-        #                         jointIndex = self.robot_joint_dict['right_outer_knuckle_joint'],
-        #                         controlMode = p.POSITION_CONTROL,
-        #                         targetPosition = -1 * pos,
-        #                         physicsClientId = self.physicsClientId,
-        #                         force = max_torque
-        #                         )
-        # p.setJointMotorControl2(bodyIndex = self.robot_id,
-        #                         jointIndex = self.robot_joint_dict['right_inner_knuckle_joint'],
-        #                         controlMode = p.POSITION_CONTROL,
-        #                         targetPosition = -1 * pos,
-        #                         physicsClientId = self.physicsClientId,
-        #                         force = max_torque
-        #                         )
-        # p.setJointMotorControl2(bodyIndex = self.robot_id,
-        #                         jointIndex = self.robot_joint_dict['right_inner_finger_joint'],
-        #                         controlMode = p.POSITION_CONTROL,
-        #                         targetPosition = 1 * pos,
-        #                         physicsClientId = self.physicsClientId,
-        #                         force = max_torque
-        #                         )
-        pass
+        p.setJointMotorControl2(bodyIndex = self.robot_id,
+                                jointIndex = self.robot_joint_dict['right_outer_knuckle_joint'],
+                                controlMode = p.POSITION_CONTROL,
+                                targetPosition = pos,
+                                physicsClientId = self.physicsClientId,
+                                force = max_torque
+                                )
+        p.setJointMotorControl2(bodyIndex = self.robot_id,
+                                jointIndex = self.robot_joint_dict['right_inner_knuckle_joint'],
+                                controlMode = p.POSITION_CONTROL,
+                                targetPosition = pos,
+                                physicsClientId = self.physicsClientId,
+                                force = max_torque
+                                )
+        p.setJointMotorControl2(bodyIndex = self.robot_id,
+                                jointIndex = self.robot_joint_dict['right_inner_finger_joint'],
+                                controlMode = p.POSITION_CONTROL,
+                                targetPosition = -pos,
+                                physicsClientId = self.physicsClientId,
+                                force = max_torque
+                                 )
 
     def control_gripper(self, target_val: float, duration: float) -> bool:
         return self.control_target_joint_states(self, target_pos = [target_val], target_vel= [0], target_duration = duration, target_joint_names = ['finger_joint'])
