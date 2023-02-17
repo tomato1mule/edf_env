@@ -147,6 +147,7 @@ class UR5Env(BulletEnv):
         self.robot_joint_dict, self.robot_joint_type_dict, self.n_joints = load_joints_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
         self.robot_links_dict, self.n_robot_links = load_links_info(body_id=self.robot_id, physicsClientId=self.physicsClientId)
         self.end_effector_link_id = self.robot_links_dict[self.end_effector_link_name]
+        self._fake_joints: set = set(["left_finger_z_joint_fake", "right_finger_z_joint_fake", "left_inner_finger_joint_fake", "right_inner_finger_joint_fake"])
         self.init_robot_pose(init_gripper=True)
 
         # self.movable_joint_ids = []                    # Idx: Movable joint idx (0~5) || Val: Pybullet jointId (0~27)
@@ -338,7 +339,7 @@ class UR5Env(BulletEnv):
         
         return np.asarray(pcd.points), np.asarray(pcd.colors)
 
-    def _get_joint_state(self, joint_id):
+    def _get_joint_state(self, joint_id) -> Tuple[float, float]:
         name = self.robot_joint_dict[joint_id]
         if name == 'finger_joint':
             jstate = p.getJointState(bodyUniqueId = self.robot_id, jointIndex=self.robot_joint_dict['left_inner_finger_joint_fake'])
@@ -375,9 +376,19 @@ class UR5Env(BulletEnv):
 
         return pos_list, vel_list
 
-    def get_joint_states(self) -> Tuple[List[float], List[float]]:
+    def _get_joint_states(self) -> Tuple[List[float], List[float]]:
         """Docstring TODO"""
         return self._get_joint_states_from_id_list(joint_ids=list(range(self.n_joints)))
+
+    def get_joint_state_dict(self) -> Dict[str, Tuple[float, float]]:
+        state_dict = {}
+        for k,v in self.robot_joint_dict.items():
+            if type(k) == str:
+                if k in self._fake_joints:
+                    pass
+                else:
+                    state_dict[k] = self._get_joint_state(v)
+        return state_dict
 
     def step(self):
         self.gripper_mimic_constraint()
@@ -464,7 +475,7 @@ class UR5Env(BulletEnv):
         target_steps = int(target_duration * self.sim_freq)
         target_pos, target_vel = np.array(target_pos), np.array(target_vel)                                           # Shape: (N_target_joints, 3), (N_target_joints, 3)
 
-        current_pos, current_vel = self.get_joint_states()
+        current_pos, current_vel = self._get_joint_states()
         current_pos, current_vel = np.array(current_pos)[control_joint_IDs], np.array(current_vel)[control_joint_IDs] # Shape: (N_target_joints, 3), (N_target_joints, 3)
 
         for step in range(target_steps):

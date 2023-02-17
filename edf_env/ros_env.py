@@ -123,17 +123,18 @@ class UR5EnvRos():
             rate.sleep()
 
     def publish_joint_info(self):
-        pos, vel = self.env.get_joint_states()
+        state_dict = self.env.get_joint_state_dict()
 
         header = Header()
         header.stamp = rospy.Time.now()
 
         msg = JointState()
         msg.header = header
-        for id in range(self.env.n_joints):
-            msg.name.append(self.env.robot_joint_dict[id])
-            msg.position.append(pos[id])
-            msg.velocity.append(vel[id])
+        for k,v in state_dict.items():
+            msg.name.append(k)
+            msg.position.append(v[0])
+            msg.velocity.append(v[1])
+
         self.joint_pub.publish(msg)
 
     def execute_cb(self, goal):
