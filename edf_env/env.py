@@ -189,6 +189,9 @@ class UR5Env(BulletEnv):
             self.monitor_cam_configs: List[CamConfig] = self.load_cam_config(cam_config_path=self.monitor_cam_config_path)
             debug_config = self.monitor_cam_configs[0]
             p.resetDebugVisualizerCamera(cameraDistance = debug_config['distance'], cameraYaw = debug_config['ypr'][0], cameraPitch = debug_config['ypr'][1], cameraTargetPosition = self.scene_center, physicsClientId=self.physicsClientId)
+
+        p.changeDynamics(self.robot_id, self.robot_links_dict[self.lfinger_link_name], lateralFriction = 3., rollingFriction=3., spinningFriction=3.)
+        p.changeDynamics(self.robot_id, self.robot_links_dict[self.rfinger_link_name], lateralFriction = 3., rollingFriction=3., spinningFriction=3.)
         #########################################################################################
 
         return True
@@ -212,6 +215,7 @@ class UR5Env(BulletEnv):
         self.end_effector_link_name = robot_config['end_effector_link_name']
         self.lfinger_link_name = robot_config['lfinger_link_name']
         self.rfinger_link_name = robot_config['rfinger_link_name']
+        self.gripper_max_force = robot_config['gripper_max_force']
 
 
         table_config: Dict[str, Any] = config['table_config']
@@ -436,11 +440,13 @@ class UR5Env(BulletEnv):
                                         jointIndex = self.robot_joint_dict['left_inner_finger_joint_fake'],
                                         controlMode = p.POSITION_CONTROL,
                                         targetPosition = x_disp,
+                                        force = self.gripper_max_force,
                                         physicsClientId=self.physicsClientId) 
                 p.setJointMotorControl2(bodyIndex = self.robot_id,
                                         jointIndex = self.robot_joint_dict['left_finger_z_joint_fake'],
                                         controlMode = p.POSITION_CONTROL,
                                         targetPosition = z_disp,
+                                        force = self.gripper_max_force,
                                         physicsClientId=self.physicsClientId) 
                 
             elif id == self.robot_joint_dict['right_inner_finger_joint']:
@@ -450,11 +456,13 @@ class UR5Env(BulletEnv):
                                         jointIndex = self.robot_joint_dict['right_inner_finger_joint_fake'],
                                         controlMode = p.POSITION_CONTROL,
                                         targetPosition = x_disp,
+                                        force = self.gripper_max_force,
                                         physicsClientId=self.physicsClientId) 
                 p.setJointMotorControl2(bodyIndex = self.robot_id,
                                         jointIndex = self.robot_joint_dict['right_finger_z_joint_fake'],
                                         controlMode = p.POSITION_CONTROL,
                                         targetPosition = z_disp,
+                                        force = self.gripper_max_force,
                                         physicsClientId=self.physicsClientId) 
                 
 

@@ -35,6 +35,7 @@ robot_config:
   # end_effector_link_id: 26  # joint 26:  ur_arm_flange-tool0  =>  child link = link 26 = ur_arm_tool0  =>  <end_effector name="robotiq_gripper" parent_link="ur_arm_tool0" group="gripper" parent_group="arm"/>
   lfinger_link_name: "left_inner_finger"
   rfinger_link_name: "right_inner_finger"
+  gripper_max_force: 100
   
 table_config:
   spawn: True
