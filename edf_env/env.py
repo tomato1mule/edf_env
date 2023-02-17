@@ -601,12 +601,6 @@ class UR5Env(BulletEnv):
 
     def release(self):
         self.control_target_joint_states(target_joint_names=['finger_joint'], target_pos=[0.], target_vel=[], target_duration=1.0)
-
-    def move_z(self, val):
-        self.control_target_joint_states(target_joint_names=['left_finger_z_joint_fake'], target_pos=[val], target_vel=[], target_duration=1.0)
-
-    def move_x(self, val):
-        self.control_target_joint_states(target_joint_names=['left_inner_finger_joint_fake'], target_pos=[val], target_vel=[], target_duration=1.0)
     
     def grasp_check(self, item_id: int) -> bool:
         if (len(p.getContactPoints(self.robot_id, item_id, self.robot_links_dict[self.lfinger_link_name], -1)) > 0) and (len(p.getContactPoints(self.robot_id, item_id, self.robot_links_dict[self.rfinger_link_name], -1)) > 0):
