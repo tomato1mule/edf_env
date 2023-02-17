@@ -804,8 +804,8 @@
         <mesh
           filename="meshes/robotiq/inner_knuckle_fine.stl" />
       </geometry>
-      <material name="LightGrey">
-        <color rgba="0.7 0.7 0.7 1.0"/>
+      <material name="LightGrey_">
+        <color rgba="0.0 0.0 1.0 1.0"/>
       </material>
     </visual>
     <collision>
@@ -1139,8 +1139,8 @@
 <!-- ============================================================================================================== -->
 
   <link
-    name="left_finger_z_fake">
-    <!-- <visual>
+    name="finger_z_fake">
+    <visual>
       <origin
         xyz="0 0 0"
         rpy="0 0 0" />
@@ -1150,10 +1150,10 @@
        <material name="green">
         <color rgba="0 1 0 0.5"/>
       </material>
-    </visual> -->
+    </visual>
   </link>
   <joint
-    name="left_finger_z_joint_fake"
+    name="finger_z_joint_fake"
     type="prismatic">
     <origin
       xyz="0 0 0.07"
@@ -1161,7 +1161,7 @@
     <parent
       link="robotiq_85_base_link" />
     <child
-      link="left_finger_z_fake" />
+      link="finger_z_fake" />
     <axis
       xyz="0 0 1" />
     <limit
@@ -1171,7 +1171,71 @@
       effort="1000" />
   </joint>
 
-  <link name="left_inner_finger">
+  <link
+    name="left_inner_finger_fake">
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="meshes/robotiq/inner_finger_fine.stl" />
+      </geometry>
+       <material name="red">
+        <color rgba="1 0 0 0.5"/>
+      </material>
+    </visual>
+    <!-- <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="meshes/robotiq/inner_finger_coarse.stl" />
+      </geometry>
+    </collision> -->
+  </link>
+  <joint
+    name="left_inner_finger_joint_fake"
+    type="prismatic">
+    <origin
+      xyz="0.014 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="finger_z_fake" />
+    <child
+      link="left_inner_finger_fake" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-1"
+      upper="1"
+      velocity="2.0"
+      effort="1000" />
+  </joint>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <link
+    name="left_inner_finger">
     <!-- <inertial>
       <origin
         xyz="0.0060275613594574 -6.29183141465421E-15 0.00669925693133241"
@@ -1209,27 +1273,6 @@
     </collision>
   </link>
   <joint
-    name="left_inner_finger_joint_fake"
-    type="prismatic">
-    <origin
-      xyz="0.014 0 0"
-      rpy="0 0 0" />
-    <parent
-      link="left_finger_z_fake" />
-    <child
-      link="left_inner_finger" />
-    <axis
-      xyz="1 0 0" />
-    <limit
-      lower="-1"
-      upper="1"
-      velocity="2.0"
-      effort="1000" />
-  </joint>
-
-  <link name="left_inner_finger_fake">
-  </link>
-  <joint
     name="left_inner_finger_joint"
     type="revolute">
     <origin
@@ -1238,7 +1281,7 @@
     <parent
       link="left_inner_knuckle" />
     <child
-      link="left_inner_finger_fake" />
+      link="left_inner_finger" />
     <axis
       xyz="0 -1 0" />
     <limit
@@ -1252,46 +1295,8 @@
       offset="0" />
   </joint>
 
-
-
-
-
-
-
   <link
-    name="right_finger_z_fake">
-    <!-- <visual>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <box size="0.1 0.01 0.05" />
-      </geometry>
-       <material name="green">
-        <color rgba="0 1 0 0.5"/>
-      </material>
-    </visual> -->
-  </link>
-  <joint
-    name="right_finger_z_joint_fake"
-    type="prismatic">
-    <origin
-      xyz="0 0 0.07"
-      rpy="0 0 0" />
-    <parent
-      link="robotiq_85_base_link" />
-    <child
-      link="right_finger_z_fake" />
-    <axis
-      xyz="0 0 1" />
-    <limit
-      lower="-1"
-      upper="1"
-      velocity="2.0"
-      effort="1000" />
-  </joint>
-
-  <link name="right_inner_finger">
+    name="right_inner_finger">
     <!-- <inertial>
       <origin
         xyz="0.00602756228812038 -6.47284509480176E-15 0.00669925609578108"
@@ -1309,7 +1314,7 @@
     <visual>
       <origin
         xyz="0 0 0"
-        rpy="0 0 3.141592" />
+        rpy="0 0 0" />
       <geometry>
         <mesh
           filename="meshes/robotiq/inner_finger_fine.stl" />
@@ -1321,35 +1326,12 @@
     <collision>
       <origin
         xyz="0 0 0"
-        rpy="0 0 3.141592" />
+        rpy="0 0 0" />
       <geometry>
         <mesh
           filename="meshes/robotiq/inner_finger_coarse.stl" />
       </geometry>
     </collision>
-  </link>
-  <joint
-    name="right_inner_finger_joint_fake"
-    type="prismatic">
-    <origin
-      xyz="-0.014 0 0"
-      rpy="0 0 0" />
-    <parent
-      link="right_finger_z_fake" />
-    <child
-      link="right_inner_finger" />
-    <axis
-      xyz="1 0 0" />
-    <limit
-      lower="-1"
-      upper="1"
-      velocity="2.0"
-      effort="1000" />
-  </joint>
-
-
-
-  <link name="right_inner_finger_fake">
   </link>
   <joint
     name="right_inner_finger_joint"
@@ -1360,7 +1342,7 @@
     <parent
       link="right_inner_knuckle" />
     <child
-      link="right_inner_finger_fake" />
+      link="right_inner_finger" />
     <axis
       xyz="0 1 0" />
     <limit
@@ -1368,6 +1350,10 @@
       upper="0.8757"
       velocity="2.0"
       effort="1000" />
+    <mimic 
+      joint="finger_joint"
+      multiplier="1"
+      offset="0" />
   </joint>
 
 
