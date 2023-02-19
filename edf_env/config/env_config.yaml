@@ -36,6 +36,8 @@ robot_config:
   lfinger_link_name: "left_inner_finger"
   rfinger_link_name: "right_inner_finger"
   gripper_max_force: 100
+  max_gripper_val: 0.725
+  min_gripper_val: 0.
   
 table_config:
   spawn: True

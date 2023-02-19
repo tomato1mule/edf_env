@@ -57,8 +57,10 @@ class UR5EnvRos():
         self.update_scene_pc_server = rospy.Service('update_scene_pointcloud', Empty, self.update_scene_pc_srv_callback)
         self.update_eef_pc_server = rospy.Service('update_eef_pointcloud', Empty, self.update_eef_pc_srv_callback)
         self.reset_env = rospy.Service('reset_env', Empty, self.reset_env_srv_callback)
-        self.attach_srv = rospy.Service('env_attach_srv', Trigger, self.attach_srv_callback)
-        self.detach_srv = rospy.Service('env_detach_srv', Trigger, self.detach_srv_callback)
+        # self.attach_srv = rospy.Service('env_attach_srv', Trigger, self.attach_srv_callback)
+        # self.detach_srv = rospy.Service('env_detach_srv', Trigger, self.detach_srv_callback)
+        self.grasp_srv = rospy.Service('grasp_srv', Trigger, self.grasp_srv_callback)
+        self.release_srv = rospy.Service('release_srv', Trigger, self.release_srv_callback)
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
@@ -283,20 +285,39 @@ class UR5EnvRos():
 
         return EmptyResponse()
     
-    def attach_srv_callback(self, request: TriggerRequest) -> TriggerResponse:
-        result = self.env.attach(item_id=self.env.target_obj_id)
-        if result == 'ALREADY_IN_GRASP' or result == 'SUCCESS':
-            success = True
+    # def attach_srv_callback(self, request: TriggerRequest) -> TriggerResponse:
+    #     result = self.env.attach(item_id=self.env.target_obj_id)
+    #     if result == 'ALREADY_IN_GRASP' or result == 'SUCCESS':
+    #         success = True
+    #     else:
+    #         success = False
+
+    #     return TriggerResponse(success=success, message=result)
+    
+    # def detach_srv_callback(self, request: TriggerRequest) -> TriggerResponse:
+    #     result = self.env.detach()
+    #     if result == 'NO_ATTACHED_OBJ' or result == 'SUCCESS':
+    #         success = True
+    #     else:
+    #         success = False
+
+    #     return TriggerResponse(success=success, message=result)
+    
+    def grasp_srv_callback(self, request: TriggerRequest) -> TriggerResponse:
+        success = self.env.grasp()
+        if success:
+            result = 'SUCCESS'
         else:
-            success = False
+            result = 'FAIL_UNKNOWN'
 
         return TriggerResponse(success=success, message=result)
     
-    def detach_srv_callback(self, request: TriggerRequest) -> TriggerResponse:
-        result = self.env.detach()
-        if result == 'NO_ATTACHED_OBJ' or result == 'SUCCESS':
-            success = True
+    def release_srv_callback(self, request: TriggerRequest) -> TriggerResponse:
+        success = self.env.release()
+        if success:
+            result = 'SUCCESS'
         else:
-            success = False
+            result = 'FAIL_UNKNOWN'
 
         return TriggerResponse(success=success, message=result)
+    

@@ -164,7 +164,7 @@ class UR5Env(BulletEnv):
         self.set_gripper_constraint()
         self.grasp_constraint: List[int] = []
         self.grasped_item: Optional[int] = None
-        self.detach()
+        # self.detach()
 
 
         ############ Load table ################################################
@@ -216,6 +216,8 @@ class UR5Env(BulletEnv):
         self.lfinger_link_name = robot_config['lfinger_link_name']
         self.rfinger_link_name = robot_config['rfinger_link_name']
         self.gripper_max_force = robot_config['gripper_max_force']
+        self.max_gripper_val = robot_config['max_gripper_val']
+        self.min_gripper_val = robot_config['min_gripper_val']
 
 
         table_config: Dict[str, Any] = config['table_config']
@@ -596,11 +598,13 @@ class UR5Env(BulletEnv):
 
         return constraints
     
-    def grasp(self, val):
-        self.control_target_joint_states(target_joint_names=['finger_joint'], target_pos=[val], target_vel=[], target_duration=1.0)
+    def grasp(self, val: Optional[float] = None) -> bool:
+        if val is None:
+            val = self.max_gripper_val
+        return self.control_target_joint_states(target_joint_names=['finger_joint'], target_pos=[val], target_vel=[], target_duration=1.0)
 
-    def release(self):
-        self.control_target_joint_states(target_joint_names=['finger_joint'], target_pos=[0.], target_vel=[], target_duration=1.0)
+    def release(self) -> bool:
+        return self.control_target_joint_states(target_joint_names=['finger_joint'], target_pos=[self.min_gripper_val], target_vel=[], target_duration=1.0)
     
     def grasp_check(self, item_id: int) -> bool:
         if (len(p.getContactPoints(self.robot_id, item_id, self.robot_links_dict[self.lfinger_link_name], -1)) > 0) and (len(p.getContactPoints(self.robot_id, item_id, self.robot_links_dict[self.rfinger_link_name], -1)) > 0):
@@ -608,68 +612,68 @@ class UR5Env(BulletEnv):
         else:
             return False
 
-    def attach(self, item_id: Optional[int]) -> str:
-        if item_id is None:
-            assert self.target_obj_id is not None, "UR5ENV.attach(item_id): item_id must be specified."
-            item_id = self.target_obj_id
+    # def attach(self, item_id: Optional[int]) -> str:
+    #     if item_id is None:
+    #         assert self.target_obj_id is not None, "UR5ENV.attach(item_id): item_id must be specified."
+    #         item_id = self.target_obj_id
 
-        if self.grasp_check(item_id) is True:
-            if not self.grasp_constraint:
-                return 'ALREADY_IN_GRASP'
-            else:
-                grasp_constraint = []
+    #     if self.grasp_check(item_id) is True:
+    #         if not self.grasp_constraint:
+    #             return 'ALREADY_IN_GRASP'
+    #         else:
+    #             grasp_constraint = []
 
-                body_pos, body_orn = p.getBasePositionAndOrientation(bodyUniqueId=item_id, physicsClientId=self.physicsClientId)
-                lfinger_pos, lfinger_orn = self.get_link_pose(link_id=self.robot_links_dict[self.lfinger_link_name])
-                rel_quat = Rotation.from_quat(lfinger_orn).inv() * Rotation.from_quat(body_orn)
-                rel_pos = rel_quat.apply(np.array([body_pos])-np.array([lfinger_pos]))
-                rel_quat = rel_quat.as_quat()
-                grasp_constraint.append(p.createConstraint(parentBodyUniqueId=self.robot_id, 
-                                                           parentLinkIndex=self.robot_links_dict[self.lfinger_link_name],
-                                                           childBodyUniqueId=item_id,
-                                                           childLinkIndex=-1,
-                                                           jointType=p.JOINT_FIXED,
-                                                           jointAxis=[0., 0., 0.],
-                                                           parentFramePosition=rel_pos,
-                                                           childFramePosition=[0., 0., 0.],
-                                                           parentFrameOrientation=rel_quat,
-                                                           childFrameOrientation=[0., 0., 0., 1.],
-                                                           physicsClientId=self.physicsClientId)
-                )
+    #             body_pos, body_orn = p.getBasePositionAndOrientation(bodyUniqueId=item_id, physicsClientId=self.physicsClientId)
+    #             lfinger_pos, lfinger_orn = self.get_link_pose(link_id=self.robot_links_dict[self.lfinger_link_name])
+    #             rel_quat = Rotation.from_quat(lfinger_orn).inv() * Rotation.from_quat(body_orn)
+    #             rel_pos = rel_quat.apply(np.array([body_pos])-np.array([lfinger_pos]))
+    #             rel_quat = rel_quat.as_quat()
+    #             grasp_constraint.append(p.createConstraint(parentBodyUniqueId=self.robot_id, 
+    #                                                        parentLinkIndex=self.robot_links_dict[self.lfinger_link_name],
+    #                                                        childBodyUniqueId=item_id,
+    #                                                        childLinkIndex=-1,
+    #                                                        jointType=p.JOINT_FIXED,
+    #                                                        jointAxis=[0., 0., 0.],
+    #                                                        parentFramePosition=rel_pos,
+    #                                                        childFramePosition=[0., 0., 0.],
+    #                                                        parentFrameOrientation=rel_quat,
+    #                                                        childFrameOrientation=[0., 0., 0., 1.],
+    #                                                        physicsClientId=self.physicsClientId)
+    #             )
 
-                # body_pos, body_orn = p.getBasePositionAndOrientation(bodyUniqueId=item_id, physicsClientId=self.physicsClientId)
-                # rfinger_pos, rfinger_orn = self.get_link_pose(link_id=self.robot_links_dict[self.rfinger_link_name])
-                # rel_quat = Rotation.from_quat(rfinger_orn).inv() * Rotation.from_quat(body_orn)
-                # rel_pos = rel_quat.apply(np.array([body_pos])-np.array([rfinger_pos]))
-                # rel_quat = rel_quat.as_quat()
-                # grasp_constraint.append(p.createConstraint(parentBodyUniqueId=self.robot_id, 
-                #                                            parentLinkIndex=self.robot_links_dict[self.rfinger_link_name],
-                #                                            childBodyUniqueId=item_id,
-                #                                            childLinkIndex=-1,
-                #                                            jointType=p.JOINT_FIXED,
-                #                                            jointAxis=[0., 0., 0.],
-                #                                            parentFramePosition=rel_pos,
-                #                                            childFramePosition=[0., 0., 0.],
-                #                                            parentFrameOrientation=rel_quat,
-                #                                            childFrameOrientation=[0., 0., 0., 1.],
-                #                                            physicsClientId=self.physicsClientId)
-                # )
+    #             # body_pos, body_orn = p.getBasePositionAndOrientation(bodyUniqueId=item_id, physicsClientId=self.physicsClientId)
+    #             # rfinger_pos, rfinger_orn = self.get_link_pose(link_id=self.robot_links_dict[self.rfinger_link_name])
+    #             # rel_quat = Rotation.from_quat(rfinger_orn).inv() * Rotation.from_quat(body_orn)
+    #             # rel_pos = rel_quat.apply(np.array([body_pos])-np.array([rfinger_pos]))
+    #             # rel_quat = rel_quat.as_quat()
+    #             # grasp_constraint.append(p.createConstraint(parentBodyUniqueId=self.robot_id, 
+    #             #                                            parentLinkIndex=self.robot_links_dict[self.rfinger_link_name],
+    #             #                                            childBodyUniqueId=item_id,
+    #             #                                            childLinkIndex=-1,
+    #             #                                            jointType=p.JOINT_FIXED,
+    #             #                                            jointAxis=[0., 0., 0.],
+    #             #                                            parentFramePosition=rel_pos,
+    #             #                                            childFramePosition=[0., 0., 0.],
+    #             #                                            parentFrameOrientation=rel_quat,
+    #             #                                            childFrameOrientation=[0., 0., 0., 1.],
+    #             #                                            physicsClientId=self.physicsClientId)
+    #             # )
 
-                self.grasp_constraint = grasp_constraint
-                self.grasped_item = item_id
-                return 'SUCCESS'
-        else:
-            return 'FAIL'
+    #             self.grasp_constraint = grasp_constraint
+    #             self.grasped_item = item_id
+    #             return 'SUCCESS'
+    #     else:
+    #         return 'FAIL'
 
-    def detach(self) -> str:
-        if self.grasp_constraint:
-            for constraint in self.grasp_constraint:
-                p.removeConstraint(constraint, physicsClientId=self.physicsClientId)
-            self.grasp_constraint = []
-            self.grasped_item = None
-            return 'SUCCESS'
-        else:
-            return 'NO_ATTACHED_OBJ'
+    # def detach(self) -> str:
+    #     if self.grasp_constraint:
+    #         for constraint in self.grasp_constraint:
+    #             p.removeConstraint(constraint, physicsClientId=self.physicsClientId)
+    #         self.grasp_constraint = []
+    #         self.grasped_item = None
+    #         return 'SUCCESS'
+    #     else:
+    #         return 'NO_ATTACHED_OBJ'
 
     # def disable_gripper_self_collision(self):
     #     p.setCollisionFilterPair(self.robot_id, self.robot_id, self.robot_joint_dict['left_outer_finger_joint'], self.robot_joint_dict['left_inner_finger_joint'], 0, self.physicsClientId)
