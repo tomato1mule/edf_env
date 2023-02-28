@@ -52,8 +52,10 @@ class BulletEnv():
             self.reset()
 
     def reset(self, seed: Optional[int] = None) -> bool:
+        # if seed == None:
+        #     seed = np.random.randint(2**32)
         """Reset task environment."""
-        self.rng: np.random._generator.Generator = np.random.default_rng(seed=seed)
+        self.rng: np.random.Generator = np.random.default_rng(seed=seed)
         p.resetSimulation(physicsClientId=self.physicsClientId)
 
         p.setAdditionalSearchPath(pybullet_data.getDataPath())                                      # Search for default assets directory.
@@ -774,15 +776,82 @@ class MugEnv(UR5Env):
         if type(self) == MugEnv:
             self.reset()
 
-    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger') -> bool:
-        super().reset(seed=seed)
+    def sample_poses(self, randomize: bool, mug_pose: str, min_dist = 0.2) -> Tuple[bool, Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+        mug_pos = self.scene_center + np.array([0, 0, 0.1])
+        if mug_pose == 'upright':
+            mug_orn = np.array([0., 0., 0., 1.])
+        elif mug_pose == 'lying':
+            mug_pos = mug_pos + np.array([0.05, 0, 0.])
+            mug_orn = Rotation.from_rotvec(np.array([0., 0., -np.pi/2])) * Rotation.from_quat(np.array([1/np.sqrt(2), 0., 0., 1/np.sqrt(2)]))
+            mug_orn = mug_orn.as_quat()
+        else:
+            raise NotImplementedError
+
+        if randomize:
+            mug_pos = mug_pos + self.rng.uniform(low=-1., high = 1., size=3) * np.array([0.1, 0.1, 0.0])
+            if mug_pose == 'upright':
+                theta = self.rng.uniform(low=0., high=np.pi * 2, size=1)
+                mug_orn = Rotation.from_quat(mug_orn) * Rotation.from_rotvec(np.array([0., 0., 1.]) * theta)
+                mug_orn = mug_orn.as_quat()
+            elif mug_pose == 'lying':
+                theta_1 = self.rng.uniform(low=-60/180*np.pi, high=60/180*np.pi, size=1)
+                theta_2 = self.rng.uniform(low=-90/180*np.pi, high=90/180*np.pi, size=1)
+                mug_orn = Rotation.from_rotvec(np.array([0., 0., 1.]) * theta_2) * Rotation.from_quat(mug_orn) * Rotation.from_rotvec(np.array([0., 0., 1.]) * theta_1)
+                mug_orn = mug_orn.as_quat()
+            else:
+                raise NotImplementedError
+
+
+        hanger_pos_radius = 0.27
+        if randomize:
+            theta = self.rng.uniform(low=-110/180*np.pi, high=110/180*np.pi, size=1)
+            hanger_pos = self.scene_center + hanger_pos_radius * np.array([float(np.cos(theta)), float(np.sin(theta)), 0.])
+            hanger_orn = Rotation.from_rotvec(np.array([0., 0., 1.]*theta)) * Rotation.from_quat(np.array([0, 0, 1., 0]))
+            hanger_orn = hanger_orn.as_quat()
+        else:
+            hanger_pos = self.scene_center + hanger_pos_radius * np.array([1., 0, 0.])
+            hanger_orn = np.array([0, 0, 1., 0])
+
+
+
+
+        if np.linalg.norm((hanger_pos-mug_pos)[:2]) < min_dist:
+            success = False
+        else:
+            success = True
+
+        return success, (mug_pos, mug_orn, hanger_pos, hanger_orn)
+        
+
+
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger', mug_pose: str = 'lying') -> bool:
+        if mug_pose not in ['upright', 'lying']:
+            raise ValueError(f"edf_env: Unknown target object pose: '{mug_pose}'")
+
+        if seed == -1:
+            super().reset(seed=0)
+            deterministic = True
+        else:
+            super().reset(seed=seed)
+            deterministic = False
+
+        max_reset_try = 100
+        for tries in range(max_reset_try):
+            success, poses = self.sample_poses(randomize = not deterministic, mug_pose=mug_pose, min_dist=0.1)
+            if success:
+                break
+            if tries == max_reset_try - 1:
+                raise TimeoutError
+        mug_pos, mug_orn, hanger_pos, hanger_orn = poses
+        
 
         self.mug_id = self.spawn_mug(mug_name=mug_name, 
-                                     pos = self.scene_center + np.array([0, 0, 0.1]), 
+                                     pos = mug_pos, 
+                                     orn = mug_orn,
                                      scale = 1.5)
         self.hanger_id = self.spawn_hanger(hanger_name=hanger_name, 
-                                           pos = self.scene_center + np.array([0.27, 0, 0.]), 
-                                           orn = np.array([0, 0, 1, 0]),
+                                           pos = hanger_pos, 
+                                           orn = hanger_orn,
                                            scale = 1.0)
         self.target_obj_id = self.mug_id
 
