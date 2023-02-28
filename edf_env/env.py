@@ -569,7 +569,7 @@ class UR5Env(BulletEnv):
                            )
 
 
-    def move_robot_base(self, target_pos: Union[np.ndarray, List[float]], speed: float = 0.5):
+    def move_robot_base(self, target_pos: Union[np.ndarray, List[float]], speed: float = 0.5, cooldown_sec: float = 1.):
         assert len(target_pos) == 2
         current_pos = self.get_base_pose()[0]
         target_pos, current_pos = np.array(target_pos), np.array(current_pos)
@@ -580,7 +580,7 @@ class UR5Env(BulletEnv):
         duration = int(self.sim_freq * duration) # sec -> steps
         duration = max(duration, int(0.2 * self.sim_freq))
 
-        r = 0.7
+        r = 0.9
         for i in range(int(r * duration)):
             pos = (i/int(r * duration))*target_pos + (1 - i/int(r * duration))*current_pos
             p.changeConstraint(userConstraintUniqueId = self.mobile_base_constraint,
@@ -596,6 +596,9 @@ class UR5Env(BulletEnv):
                                jointChildPivot = target_pos,
                                physicsClientId = self.physicsClientId
                                )
+            p.stepSimulation()
+
+        for i in range(int(cooldown_sec*self.sim_freq)):
             p.stepSimulation()
 
 
