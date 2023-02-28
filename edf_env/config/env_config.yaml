@@ -16,7 +16,7 @@ eef_config:
 
 robot_config: 
   robot_base_pose_init:
-    pos: [-0.7, 0.0, 0.0]
+    pos: [-0.7, 0.0, 0.027]
     orn: null
   robot_joint_init:
   - name: "ur_arm_elbow_joint" 
@@ -41,7 +41,7 @@ robot_config:
   
 table_config:
   spawn: True
-  pos: [0.0, 0.0, -0.28]
+  pos: [0.0, 0.0, -0.20]
   rpy: [0.0, 0.0, 0.0]
   center: [0.0, 0.0, 0.625] # Relative center
   scale: 1.0               # The table size is 1.5m * 1.0m  @  scale=1.0

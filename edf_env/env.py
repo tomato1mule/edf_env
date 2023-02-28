@@ -151,6 +151,8 @@ class UR5Env(BulletEnv):
         self.end_effector_link_id = self.robot_links_dict[self.end_effector_link_name]
         self._fake_joints: set = set(["left_finger_z_joint_fake", "right_finger_z_joint_fake", "left_inner_finger_joint_fake", "right_inner_finger_joint_fake"])
         self.init_robot_pose(init_gripper=True)
+        self.mobile_base_max_force = 2000
+        self.set_mobile_base_constraint(position=self.robot_base_pose_init['pos'])
 
         # self.movable_joint_ids = []                    # Idx: Movable joint idx (0~5) || Val: Pybullet jointId (0~27)
         # for k,v in self.robot_joint_dict.items():
@@ -210,7 +212,8 @@ class UR5Env(BulletEnv):
         robot_config: Dict[str, Any] = config['robot_config']
         self.robot_base_pose_init: Dict[str, Optional[np.ndarray]] = robot_config['robot_base_pose_init']
         if self.robot_base_pose_init['pos'] is None:
-            self.robot_base_pose_init['pos'] = np.array([0.0, 0.0, 0.0])
+            raise ValueError
+            # self.robot_base_pose_init['pos'] = np.array([0.0, 0.0, 0.0])
         if self.robot_base_pose_init['orn'] is None:
             self.robot_base_pose_init['orn'] = np.array([0.0, 0.0, 0.0, 1.0])
         self.robot_joint_init = robot_config['robot_joint_init']
@@ -252,7 +255,7 @@ class UR5Env(BulletEnv):
 
     def load_robot(self, urdf_path: str) -> int:
         """Loads list of pybullet camera configs from yaml file path."""
-        robot_id = p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'], useFixedBase = True)
+        robot_id = p.loadURDF(fileName=urdf_path, physicsClientId=self.physicsClientId, basePosition = self.robot_base_pose_init['pos'], baseOrientation = self.robot_base_pose_init['orn'], useFixedBase = False)
         return robot_id
 
     def observe_monitor_img(self, target_pos: Optional[np.ndarray] = None, return_seg: bool = False, color_encoding: str = "float") -> List[CamData]:
@@ -522,6 +525,7 @@ class UR5Env(BulletEnv):
             name = config['name']
             value = config['value']
             p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict[name], targetValue = value)
+            p.setJointMotorControl2(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict[name], controlMode=p.POSITION_CONTROL, targetPosition = value)
         if init_gripper:
             self.init_gripper()
 
@@ -533,17 +537,67 @@ class UR5Env(BulletEnv):
 
         z_disp, x_disp = self._rev_to_pris_finger(angle=0.)
 
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['finger_joint'], targetValue = 0)
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['left_inner_knuckle_joint'], targetValue = 0)
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['left_inner_finger_joint'], targetValue = 0)
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['right_outer_knuckle_joint'], targetValue = 0)
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['right_inner_knuckle_joint'], targetValue = 0)
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['right_inner_finger_joint'], targetValue = 0)
+        joint_pairs = [('finger_joint', 0), 
+                       ('left_inner_knuckle_joint', 0), 
+                       ('left_inner_finger_joint', 0), 
+                       ('right_outer_knuckle_joint', 0), 
+                       ('right_inner_knuckle_joint', 0), 
+                       ('right_inner_finger_joint', 0),
+                       ('left_inner_finger_joint_fake', x_disp),
+                       ('left_finger_z_joint_fake', z_disp),
+                       ('right_inner_finger_joint_fake', -x_disp),
+                       ('right_finger_z_joint_fake', z_disp)]
+        
+        for name, val in joint_pairs:
+            p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict[name], targetValue = val)
+            p.setJointMotorControl2(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict[name], controlMode=p.POSITION_CONTROL, targetPosition = val)
 
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['left_inner_finger_joint_fake'], targetValue = x_disp)
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['left_finger_z_joint_fake'], targetValue = z_disp)
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['right_inner_finger_joint_fake'], targetValue = -x_disp)
-        p.resetJointState(bodyUniqueId=self.robot_id, jointIndex=self.robot_joint_dict['right_finger_z_joint_fake'], targetValue = z_disp)
+    def set_mobile_base_constraint(self, position):
+        self.mobile_base_constraint = p.createConstraint(parentBodyUniqueId=self.robot_id,
+                                                         parentLinkIndex=-1,
+                                                         childBodyUniqueId=self.plane_id,
+                                                         childLinkIndex=-1,
+                                                         jointType=p.JOINT_FIXED,
+                                                         jointAxis=[0., 0., 0.],
+                                                         parentFramePosition=[0., 0., 0.],
+                                                         childFramePosition=position,
+                                                         physicsClientId=self.physicsClientId)
+        p.changeConstraint(userConstraintUniqueId = self.mobile_base_constraint,
+                           jointChildPivot = position,
+                           maxForce = self.mobile_base_max_force,
+                           physicsClientId = self.physicsClientId
+                           )
+
+
+    def move_robot_base(self, target_pos: Union[np.ndarray, List[float]], speed: float = 0.5):
+        assert len(target_pos) == 2
+        current_pos = self.get_base_pose()[0]
+        target_pos, current_pos = np.array(target_pos), np.array(current_pos)
+        target_pos = np.concatenate([target_pos, self.robot_base_pose_init['pos'][-1:]], axis=-1)
+        
+        dist = np.linalg.norm(target_pos - current_pos)
+        duration = dist / speed # m/s -> s
+        duration = int(self.sim_freq * duration) # sec -> steps
+        duration = max(duration, int(0.2 * self.sim_freq))
+
+        r = 0.7
+        for i in range(int(r * duration)):
+            pos = (i/int(r * duration))*target_pos + (1 - i/int(r * duration))*current_pos
+            p.changeConstraint(userConstraintUniqueId = self.mobile_base_constraint,
+                               maxForce = self.mobile_base_max_force,
+                               jointChildPivot = pos,
+                               physicsClientId = self.physicsClientId
+                               )
+            p.stepSimulation()
+
+        for i in range(int((1-r)*duration)):
+            p.changeConstraint(userConstraintUniqueId = self.mobile_base_constraint,
+                               maxForce = self.mobile_base_max_force,
+                               jointChildPivot = target_pos,
+                               physicsClientId = self.physicsClientId
+                               )
+            p.stepSimulation()
+
 
 
     def set_gripper_constraint(self):
