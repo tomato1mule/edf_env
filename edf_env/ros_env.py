@@ -17,6 +17,7 @@ from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryF
 from trajectory_msgs.msg import JointTrajectory
 from geometry_msgs.msg import TransformStamped, Pose
 from std_srvs.srv import Empty, EmptyRequest, EmptyResponse, Trigger, TriggerRequest, TriggerResponse
+from nav_msgs.srv import GetPlan, GetPlanRequest, GetPlanResponse
 
 from edf_env.env import UR5Env
 from edf_env.pc_utils import encode_pc
@@ -61,6 +62,7 @@ class UR5EnvRos():
         # self.detach_srv = rospy.Service('env_detach_srv', Trigger, self.detach_srv_callback)
         self.grasp_srv = rospy.Service('grasp_srv', Trigger, self.grasp_srv_callback)
         self.release_srv = rospy.Service('release_srv', Trigger, self.release_srv_callback)
+        self.mobile_base_srv = rospy.Service('mobile_base_srv', GetPlan, self.mobile_base_srv_callback)
 
         rospy.init_node('edf_env', anonymous=True, log_level=rospy.INFO)
         self.arm_ctrl_AS.start()
@@ -321,3 +323,10 @@ class UR5EnvRos():
 
         return TriggerResponse(success=success, message=result)
     
+    def mobile_base_srv_callback(self, request: GetPlanRequest) -> GetPlanResponse:
+        pose: Pose = request.goal.pose
+        pos = np.array([pose.position.x, pose.position.y, pose.position.z])
+        orn = np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
+        self.env.move_robot_base(target_pos=pos[:2])
+
+        return GetPlanResponse()
