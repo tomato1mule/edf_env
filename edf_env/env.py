@@ -781,19 +781,22 @@ class MugEnv(UR5Env):
         if mug_pose == 'upright':
             mug_orn = np.array([0., 0., 0., 1.])
         elif mug_pose == 'lying':
-            mug_pos = mug_pos + np.array([0.05, 0, 0.])
+            mug_pos = mug_pos + np.array([0.1, 0, 0.])
             mug_orn = Rotation.from_rotvec(np.array([0., 0., -np.pi/2])) * Rotation.from_quat(np.array([1/np.sqrt(2), 0., 0., 1/np.sqrt(2)]))
             mug_orn = mug_orn.as_quat()
         else:
             raise NotImplementedError
 
         if randomize:
-            mug_pos = mug_pos + self.rng.uniform(low=-1., high = 1., size=3) * np.array([0.1, 0.1, 0.0])
             if mug_pose == 'upright':
+                mug_pos = mug_pos + self.rng.uniform(low=-1., high = 1., size=3) * np.array([0.1, 0.1, 0.0])
+
                 theta = self.rng.uniform(low=0., high=np.pi * 2, size=1)
                 mug_orn = Rotation.from_quat(mug_orn) * Rotation.from_rotvec(np.array([0., 0., 1.]) * theta)
                 mug_orn = mug_orn.as_quat()
             elif mug_pose == 'lying':
+                mug_pos = mug_pos + self.rng.uniform(low=-1., high = 1., size=3) * np.array([0.02, 0.02, 0.0])
+
                 theta_1 = self.rng.uniform(low=-60/180*np.pi, high=60/180*np.pi, size=1)
                 theta_2 = self.rng.uniform(low=-90/180*np.pi, high=90/180*np.pi, size=1)
                 mug_orn = Rotation.from_rotvec(np.array([0., 0., 1.]) * theta_2) * Rotation.from_quat(mug_orn) * Rotation.from_rotvec(np.array([0., 0., 1.]) * theta_1)
@@ -824,7 +827,7 @@ class MugEnv(UR5Env):
         
 
 
-    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger', mug_pose: str = 'lying') -> bool:
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger', mug_pose: str = 'upright') -> bool:
         if mug_pose not in ['upright', 'lying']:
             raise ValueError(f"edf_env: Unknown target object pose: '{mug_pose}'")
 
