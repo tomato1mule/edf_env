@@ -833,7 +833,7 @@ class MugEnv(UR5Env):
         if type(self) == MugEnv:
             self.reset()
 
-    def sample_poses(self, randomize: bool, mug_pose: str, min_dist = 0.2) -> Tuple[bool, Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+    def sample_poses(self, randomize: bool, mug_pose: str, min_dist: float = 0.2, n_distractor: int = 4) -> Tuple[bool, Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
         mug_pos = self.scene_center + np.array([0, 0, 0.1])
         if mug_pose == 'upright':
             mug_orn = np.array([0., 0., 0., 1.])
@@ -873,18 +873,35 @@ class MugEnv(UR5Env):
             hanger_orn = np.array([0, 0, 1., 0])
 
 
+        if not randomize and n_distractor > 0:
+            raise NotImplementedError
+        distractor_ranges = np.array([[-0.25, 0.25], [-0.25,0.25]])
+        distractor_pos_list = []
+        distractor_orn_list = []
+        for i in range(n_distractor):
+            pos_x = self.rng.uniform() * (distractor_ranges[0,1] -distractor_ranges[0,0]) + distractor_ranges[0,0]
+            pos_y = self.rng.uniform() * (distractor_ranges[1,1] -distractor_ranges[1,0]) + distractor_ranges[1,0]
+            pos = np.array([pos_x, pos_y, 0.]) + self.scene_center
+            orn = np.array(p.getQuaternionFromEuler([0, 0, self.rng.uniform()*np.pi*2]))
+            distractor_pos_list.append(pos)
+            distractor_orn_list.append(orn)
 
+        min_dist_check_list = distractor_pos_list + [hanger_pos] + [mug_pos]
+        success = True
+        for i in range(len(min_dist_check_list)):
+            for j in range(len(min_dist_check_list)):
+                if i == j:
+                    pass
+                elif np.linalg.norm((min_dist_check_list[i]-min_dist_check_list[j])[:2]) < min_dist:
+                    success = False
+                else:
+                    pass
 
-        if np.linalg.norm((hanger_pos-mug_pos)[:2]) < min_dist:
-            success = False
-        else:
-            success = True
-
-        return success, (mug_pos, mug_orn, hanger_pos, hanger_orn)
+        return success, (mug_pos, mug_orn, hanger_pos, hanger_orn, distractor_pos_list, distractor_orn_list)
         
 
 
-    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger', mug_pose: str = 'upright') -> bool:
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger', mug_pose: str = 'upright', n_distractor: int = 0) -> bool:
         if mug_pose not in ['upright', 'lying']:
             raise ValueError(f"edf_env: Unknown target object pose: '{mug_pose}'")
 
@@ -902,7 +919,7 @@ class MugEnv(UR5Env):
                 break
             if tries == max_reset_try - 1:
                 raise TimeoutError
-        mug_pos, mug_orn, hanger_pos, hanger_orn = poses
+        mug_pos, mug_orn, hanger_pos, hanger_orn, distractor_pos_list, distractor_orn_list = poses
         
 
         self.mug_id = self.spawn_mug(mug_name=mug_name, 
@@ -913,7 +930,8 @@ class MugEnv(UR5Env):
                                            pos = hanger_pos, 
                                            orn = hanger_orn,
                                            scale = 1.0)
-        self.target_obj_id = self.mug_id
+        self.target_obj_id = self.spawn_distractors(pos_list = distractor_pos_list, orn_list = distractor_orn_list, n_distractor=n_distractor, deterministic=deterministic)
+
 
         for _ in range(1000):
             self.step()
@@ -931,3 +949,35 @@ class MugEnv(UR5Env):
         if orn is None:
             orn = np.array([0, 0, 0, 1])
         self.hanger_id = p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/hanger/{hanger_name}.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
+
+
+    def spawn_distractors(self, n_distractor: int, deterministic: bool, pos_list: List[np.ndarray], orn_list: List[np.ndarray], asset_dir:str = "assets/distractor"):
+        dist_root = os.path.join(edf_env.ROOT_DIR, asset_dir)
+        distractors = [("lego.urdf", 2.5), ("duck.urdf", 0.07), ("torus_textured.urdf", 0.07), ("bunny.urdf", 0.07)] # (name, scale)
+        if n_distractor > len(distractors):
+            raise ValueError(f"Too many distractors! distractors can be at most {len(distractors)}.")
+        
+        assert len(pos_list) == len(orn_list) == n_distractor
+
+        distractor_ids: List[int] = []
+        if deterministic:
+            dist_enum = list(range(n_distractor))
+        else:
+            dist_enum = self.rng.choice(len(distractors), size=n_distractor, replace=False)
+        for i in dist_enum:
+            name, scale = distractors[i]
+            pos, orn = pos_list[i], orn_list[i]
+            name = os.path.join(dist_root, name)
+            id = p.loadURDF(name, basePosition=pos, baseOrientation=orn, globalScaling=scale, physicsClientId = self.physicsClientId)
+            distractor_ids.append(id)
+
+            if not deterministic:
+                p.changeVisualShape(objectUniqueId=id, linkIndex=-1, rgbaColor = np.concatenate([np.random.rand(3), np.array([1.])]))
+
+            for k, v in self.robot_links_dict.items():
+                if isinstance(k, int):
+                    p.setCollisionFilterPair(id, self.robot_id, -1, k, 0, self.physicsClientId)
+            p.setCollisionFilterPair(id, self.robot_id, -1, self.mug_id, 0, self.physicsClientId)
+
+
+        return distractor_ids
