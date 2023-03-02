@@ -833,7 +833,7 @@ class MugEnv(UR5Env):
         if type(self) == MugEnv:
             self.reset()
 
-    def sample_poses(self, randomize: bool, mug_pose: str, min_dist: float = 0.2, n_distractor: int = 4) -> Tuple[bool, Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+    def sample_poses(self, randomize: bool, mug_pose: str, min_dist: float = 0.2, n_distractor: int = 0) -> Tuple[bool, Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
         mug_pos = self.scene_center + np.array([0, 0, 0.1])
         if mug_pose == 'upright':
             mug_orn = np.array([0., 0., 0., 1.])
@@ -901,7 +901,7 @@ class MugEnv(UR5Env):
         
 
 
-    def reset(self, seed: Optional[int] = None, mug_name: str = 'train_0', hanger_name: str = 'hanger', mug_pose: str = 'upright', n_distractor: int = 0) -> bool:
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'train/mug0', hanger_name: str = 'hanger', mug_pose: str = 'upright', n_distractor: int = 0) -> bool:
         if mug_pose not in ['upright', 'lying']:
             raise ValueError(f"edf_env: Unknown target object pose: '{mug_pose}'")
 
@@ -914,7 +914,7 @@ class MugEnv(UR5Env):
 
         max_reset_try = 100
         for tries in range(max_reset_try):
-            success, poses = self.sample_poses(randomize = not deterministic, mug_pose=mug_pose, min_dist=0.1)
+            success, poses = self.sample_poses(randomize = not deterministic, mug_pose=mug_pose, min_dist=0.1, n_distractor=n_distractor)
             if success:
                 break
             if tries == max_reset_try - 1:
@@ -942,16 +942,16 @@ class MugEnv(UR5Env):
         self.mug_scate = scale
         if orn is None:
             orn = np.array([0, 0, 0, 1])
-        return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug/{mug_name}.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId)
+        return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/mugs", mug_name, f"mug.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId)
 
     def spawn_hanger(self, hanger_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0):
         self.hanger_scale = scale
         if orn is None:
             orn = np.array([0, 0, 0, 1])
-        self.hanger_id = p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/hanger/{hanger_name}.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
+        self.hanger_id = p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/{hanger_name}", f"hanger.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
 
 
-    def spawn_distractors(self, n_distractor: int, deterministic: bool, pos_list: List[np.ndarray], orn_list: List[np.ndarray], asset_dir:str = "assets/distractor"):
+    def spawn_distractors(self, n_distractor: int, deterministic: bool, pos_list: List[np.ndarray], orn_list: List[np.ndarray], asset_dir:str = "assets/distractor/test"):
         dist_root = os.path.join(edf_env.ROOT_DIR, asset_dir)
         distractors = [("lego.urdf", 2.5), ("duck.urdf", 0.07), ("torus_textured.urdf", 0.07), ("bunny.urdf", 0.07)] # (name, scale)
         if n_distractor > len(distractors):
@@ -964,6 +964,7 @@ class MugEnv(UR5Env):
             dist_enum = list(range(n_distractor))
         else:
             dist_enum = self.rng.choice(len(distractors), size=n_distractor, replace=False)
+        
         for i in dist_enum:
             name, scale = distractors[i]
             pos, orn = pos_list[i], orn_list[i]
