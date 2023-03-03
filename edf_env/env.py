@@ -979,11 +979,13 @@ class MugEnv(UR5Env):
         for _ in range(1000):
             self.step()
 
+        # Disable collision of distractors with robot and object after spawn, such that they only serve as a visual distractor.
         for id in self.distractor_id:
             for k, v in self.robot_links_dict.items():
                 if isinstance(k, int):
                     p.setCollisionFilterPair(id, self.robot_id, -1, k, 0, self.physicsClientId)
-            p.setCollisionFilterPair(id, self.robot_id, -1, self.target_obj_id, 0, self.physicsClientId)
+            p.setCollisionFilterPair(id, self.robot_id, -1, self.target_obj_id, -1, self.physicsClientId)
+            p.setCollisionFilterPair(id, self.robot_id, -1, self.hanger_id, -1, self.physicsClientId)
 
 
         return True
@@ -998,7 +1000,7 @@ class MugEnv(UR5Env):
         self.hanger_scale = scale
         if orn is None:
             orn = np.array([0, 0, 0, 1])
-        self.hanger_id = p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/{hanger_name}", f"hanger.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
+        return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/{hanger_name}", f"hanger.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
 
 
     def spawn_distractors(self, n_distractor: int, deterministic: bool, pos_list: List[np.ndarray], orn_list: List[np.ndarray], asset_dir:str = "assets/distractor/test"):
