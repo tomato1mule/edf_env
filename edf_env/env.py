@@ -965,8 +965,8 @@ class MugEnv(UR5Env):
         else:
             dist_enum = self.rng.choice(len(distractors), size=n_distractor, replace=False)
         
-        for i in dist_enum:
-            name, scale = distractors[i]
+        for i in range(n_distractor):
+            name, scale = distractors[dist_enum]
             pos, orn = pos_list[i], orn_list[i]
             name = os.path.join(dist_root, name)
             id = p.loadURDF(name, basePosition=pos, baseOrientation=orn, globalScaling=scale, physicsClientId = self.physicsClientId)
