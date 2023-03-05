@@ -924,7 +924,7 @@ class MugEnv(UR5Env):
 
 
 
-    def reset(self, seed: Optional[int] = None, mug_name: str = 'test/mug1', hanger_name: str = 'hanger', mug_pose: str = 'upright', n_distractor: int = 0, use_support: bool = False) -> bool:
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'train/mug0', hanger_name: str = 'hanger', mug_pose: str = 'upright', n_distractor: int = 0, use_support: bool = False) -> bool:
         if mug_pose not in ['upright', 'lying']:
             raise ValueError(f"edf_env: Unknown target object pose: '{mug_pose}'")
 
