@@ -968,7 +968,7 @@ class MugEnv(UR5Env):
         self.target_obj_id = self.spawn_mug(mug_name=mug_name, 
                                             pos = mug_pos, 
                                             orn = mug_orn,
-                                            scale = 1.5)
+                                            scale = 1.0)
         self.hanger_id = self.spawn_hanger(hanger_name=hanger_name, 
                                            pos = hanger_pos, 
                                            orn = hanger_orn,
