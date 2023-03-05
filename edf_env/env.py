@@ -994,7 +994,7 @@ class MugEnv(UR5Env):
         self.mug_scate = scale
         if orn is None:
             orn = np.array([0, 0, 0, 1])
-        return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/mugs", mug_name, f"mug.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId)
+        return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/mugs", mug_name, f"mug.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, flags = p.URDF_USE_INERTIA_FROM_FILE)
 
     def spawn_hanger(self, hanger_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0):
         self.hanger_scale = scale
