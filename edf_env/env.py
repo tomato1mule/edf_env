@@ -855,8 +855,8 @@ class MugEnv(UR5Env):
             elif mug_pose == 'lying':
                 mug_pos = mug_pos + self.rng.uniform(low=-1., high = 1., size=3) * np.array([0.02, 0.02, 0.0])
 
-                theta_1 = self.rng.uniform(low=-60/180*np.pi, high=60/180*np.pi, size=1)
-                theta_2 = self.rng.uniform(low=-90/180*np.pi, high=90/180*np.pi, size=1)
+                theta_1 = self.rng.uniform(low=-60/180*np.pi, high=60/180*np.pi, size=1) # roll
+                theta_2 = self.rng.uniform(low=-60/180*np.pi, high=60/180*np.pi, size=1) # yaw
                 mug_orn = Rotation.from_rotvec(np.array([0., 0., 1.]) * theta_2) * Rotation.from_quat(mug_orn) * Rotation.from_rotvec(np.array([0., 0., 1.]) * theta_1)
                 mug_orn = mug_orn.as_quat()
             else:
@@ -924,7 +924,7 @@ class MugEnv(UR5Env):
 
 
 
-    def reset(self, seed: Optional[int] = None, mug_name: str = 'test/mug1', hanger_name: str = 'hanger', mug_pose: str = 'lying', n_distractor: int = 4, use_support: bool = True) -> bool:
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'train/mug0', hanger_name: str = 'hanger', mug_pose: str = 'upright', n_distractor: int = 0, use_support: bool = False) -> bool:
         if mug_pose not in ['upright', 'lying']:
             raise ValueError(f"edf_env: Unknown target object pose: '{mug_pose}'")
 
@@ -956,15 +956,17 @@ class MugEnv(UR5Env):
             else:
                 mug_height = self.rng.uniform(low, high)
 
+            mug_pos = mug_pos + np.array([0., 0., mug_height])
+
             self.support_id = self.spawn_support(support_name="support", 
-                                                 pos = mug_pos + np.array([0., 0., mug_height]), 
+                                                 pos = mug_pos, 
                                                  orn = np.array([0., 0., 0., 1.]),
                                                  scale = 1.0)
         else:
             self.support_id = None
 
         self.target_obj_id = self.spawn_mug(mug_name=mug_name, 
-                                            pos = mug_pos + np.array([0., 0., mug_height]), 
+                                            pos = mug_pos, 
                                             orn = mug_orn,
                                             scale = 1.5)
         self.hanger_id = self.spawn_hanger(hanger_name=hanger_name, 
@@ -1006,7 +1008,7 @@ class MugEnv(UR5Env):
         return True
 
     def spawn_mug(self, mug_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0) -> int:
-        pos = pos + np.array([0., 0., 0.1])
+        pos = pos + np.array([0., 0., 0.15])
         self.mug_scate = scale
         if orn is None:
             orn = np.array([0, 0, 0, 1])
@@ -1019,9 +1021,6 @@ class MugEnv(UR5Env):
         return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/{hanger_name}", f"hanger.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
     
     def spawn_support(self, support_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0) -> int:
-        import rospy
-        rospy.logerr(pos - self.scene_center)
-
         self.support_scale = scale
         if orn is None:
             orn = np.array([0, 0, 0, 1])
