@@ -835,7 +835,7 @@ class MugEnv(UR5Env):
 
     def sample_poses(self, randomize: bool, mug_pose: str, min_dist: float) -> Tuple[bool, Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
         assert isinstance(mug_pose, str)
-        mug_pos = self.scene_center + np.array([0, 0, 0.1])
+        mug_pos = self.scene_center# + np.array([0, 0, 0.1])
         if mug_pose == 'upright':
             mug_orn = np.array([0., 0., 0., 1.])
         elif mug_pose == 'lying':
@@ -924,7 +924,7 @@ class MugEnv(UR5Env):
 
 
 
-    def reset(self, seed: Optional[int] = None, mug_name: str = 'train/mug0', hanger_name: str = 'hanger', mug_pose: str = 'upright', n_distractor: int = 0) -> bool:
+    def reset(self, seed: Optional[int] = None, mug_name: str = 'test/mug1', hanger_name: str = 'hanger', mug_pose: str = 'lying', n_distractor: int = 4, use_support: bool = True) -> bool:
         if mug_pose not in ['upright', 'lying']:
             raise ValueError(f"edf_env: Unknown target object pose: '{mug_pose}'")
 
@@ -948,10 +948,25 @@ class MugEnv(UR5Env):
         mug_pos, mug_orn, hanger_pos, hanger_orn = poses
         
 
+        if use_support:
+            low = 0.05
+            high = 0.10
+            if deterministic:
+                mug_height = (low + high) / 2
+            else:
+                mug_height = self.rng.uniform(low, high)
+
+            self.support_id = self.spawn_support(support_name="support", 
+                                                 pos = mug_pos + np.array([0., 0., mug_height]), 
+                                                 orn = np.array([0., 0., 0., 1.]),
+                                                 scale = 1.0)
+        else:
+            self.support_id = None
+
         self.target_obj_id = self.spawn_mug(mug_name=mug_name, 
-                                     pos = mug_pos, 
-                                     orn = mug_orn,
-                                     scale = 1.5)
+                                            pos = mug_pos + np.array([0., 0., mug_height]), 
+                                            orn = mug_orn,
+                                            scale = 1.5)
         self.hanger_id = self.spawn_hanger(hanger_name=hanger_name, 
                                            pos = hanger_pos, 
                                            orn = hanger_orn,
@@ -991,6 +1006,7 @@ class MugEnv(UR5Env):
         return True
 
     def spawn_mug(self, mug_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0) -> int:
+        pos = pos + np.array([0., 0., 0.1])
         self.mug_scate = scale
         if orn is None:
             orn = np.array([0, 0, 0, 1])
@@ -1001,7 +1017,21 @@ class MugEnv(UR5Env):
         if orn is None:
             orn = np.array([0, 0, 0, 1])
         return p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/{hanger_name}", f"hanger.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
+    
+    def spawn_support(self, support_name: str, pos: np.ndarray, orn: Optional[np.ndarray] = None, scale: float = 1.0) -> int:
+        import rospy
+        rospy.logerr(pos - self.scene_center)
 
+        self.support_scale = scale
+        if orn is None:
+            orn = np.array([0, 0, 0, 1])
+        id = p.loadURDF(os.path.join(edf_env.ROOT_DIR, f"assets/mug_task/{support_name}", f"support.urdf"), basePosition=pos, baseOrientation = orn, globalScaling=scale, physicsClientId = self.physicsClientId, useFixedBase = True)
+
+        for k, v in self.robot_links_dict.items():
+            if isinstance(k, int):
+                p.setCollisionFilterPair(id, self.robot_id, -1, k, 0, self.physicsClientId) # To avoid collision of support below table and the mobile base of the robot.
+
+        return id
 
     def spawn_distractors(self, n_distractor: int, deterministic: bool, pos_list: List[np.ndarray], orn_list: List[np.ndarray], asset_dir:str = "assets/distractor/test"):
         dist_root = os.path.join(edf_env.ROOT_DIR, asset_dir)

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot name="myfirst">
+  <link name="base_link">
+    <contact>
+      <lateral_friction value="3.0"/>
+      <rolling_friction value="3.0"/>
+      <spinning_friction value="3.0"/>
+    </contact>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 -0.5"/>
+      <geometry>
+        <cylinder length="1." radius="0.05"/>
+      </geometry>
+       <material name="dark_grey">
+        <color rgba="0.282352 0.282352 0.282352 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 -0.5"/>
+      <geometry>
+        <cylinder length="1." radius="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>
