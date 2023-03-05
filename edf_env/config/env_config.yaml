@@ -10,13 +10,13 @@ scene_config:
   pc_voxel_filter_size: 0.003
 
 eef_config:
-  eef_ranges: [[-0.18, 0.18],[-0.18, 0.18],[0.0, 0.36]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
+  eef_ranges: [[-0.4, 0.4],[-0.4, 0.4],[0.0, 0.6]] # [[x_min, x_max], [y_min, y_max], [z_min, z_max]]
   pc_voxel_filter_size: 0.003
   grasp_point: [0., 0., 0.15]
 
 robot_config: 
   robot_base_pose_init:
-    pos: [-0.7, 0.0, 0.027]
+    pos: [-1.5, 0.0, 0.027]
     orn: null
   robot_joint_init:
   - name: "ur_arm_elbow_joint" 
