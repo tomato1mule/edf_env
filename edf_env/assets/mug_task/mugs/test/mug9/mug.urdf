@@ -1,26 +1,31 @@
-<?xml version="1.0" ?>
-<robot name="coffee_cup_sharp.urdf">
-  <link concave="yes" name="baseLink">
-    <inertial>
-      <origin rpy="0 0 0" xyz="0 0 0.000"/>
-       <mass value="1"/>
-       <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
-    </inertial>
-    <visual>
-      <origin rpy="1.570796326794896619231 0 1.570796326794896619231" xyz="0.0 0.015 -0.08"/>
-      <geometry>
-        <mesh filename="mug.obj" scale="0.002 0.002 0.002"/>
-      </geometry>
-      <material name="red">
-       <color rgba="1 0 0 1"/>
-     </material>
-    </visual>
-    <collision concave="yes">
-      <origin rpy="1.570796326794896619231 0 1.570796326794896619231" xyz="0.0 0.015 -0.08"/>
-      <geometry>
-        <mesh filename="mug.obj" scale="0.002 0.002 0.002"/>
-      </geometry>
-    </collision>
-  </link>
+<?xml version="0.0" ?>
+<robot name="mug">
+    <link concave="yes" name="base_link">
+        <contact>
+            <lateral_friction value="0.8"/>
+            <!--rolling_friction value="0.3"/-->
+            <!--spinning_friction value="0.3"/-->
+        </contact>
+        <inertial>
+            <origin rpy="0 0 0" xyz="0. 0. 0."/>
+            <mass value="0.1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0. 0. 0."/>
+            <geometry>
+                <mesh filename="mug_simplified.stl" scale="1 1 1 "/>
+            </geometry>
+      <material name="mug">
+        <color rgba="1 0.2 0.2 1"/>
+        <specular rgb="1 1 1"/>
+      </material>
+        </visual>
+        <collision concave="yes">
+            <origin rpy="0 0 0" xyz="0. 0. 0."/>
+            <geometry>
+                <mesh filename="mug_simplified.stl" scale="1 1 1 "/>
+            </geometry>
+        </collision>
+    </link>
 </robot>
-        

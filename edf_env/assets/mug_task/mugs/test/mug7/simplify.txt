@@ -1,0 +1,9 @@
+path = 'edf_env/edf_env/assets/mug_task/mugs/test/mug7'
+in_path = os.path.join(path, 'mug.ply')
+out_path = os.path.join(path, 'mug_simplified.stl')
+
+detail = 16
+reorient = reorient = Rotation.from_euler('XYZ', [0, 0, -np.pi/2]) * Rotation.from_euler('XYZ', [0, 0, 0])
+reorient = reorient.as_matrix() # handle to y-axis, and z-axis is upward.
+rescale = 0.14
+recenter = True

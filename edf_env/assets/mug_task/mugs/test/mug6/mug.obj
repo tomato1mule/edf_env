@@ -1,6 +1,5 @@
 # This file uses centimeters as units for non-parametric coordinates.
 
-mtllib mug.mtl
 g default
 v 23.403606 -34.102757 -1.641498
 v 22.289446 -34.102757 -8.676025
