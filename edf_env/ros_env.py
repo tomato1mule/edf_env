@@ -1,7 +1,7 @@
 import sys
 import time
 import threading
-from typing import Optional, Tuple, List, Union, Any
+from typing import Optional, Tuple, List, Union, Any, Dict
 
 import numpy as np
 
@@ -32,10 +32,11 @@ from edf_env.utils import CamData
 
 
 class UR5EnvRos():
-    def __init__(self, env: UR5Env, monitor_refresh_rate: float = 0):
+    def __init__(self, env: UR5Env, monitor_refresh_rate: float = 0, reset_kwargs: Dict = {}):
         self.env_seed = None
         self.env: UR5Env = env
         self.env_ready = True
+        self.reset_kwargs: Dict = reset_kwargs
 
         # self.current_traj: Optional[JointTrajectory] = None
         self.scene_pc_msg: Optional[PointCloud2] = None 
@@ -278,7 +279,7 @@ class UR5EnvRos():
     
     def reset_env_srv_callback(self, request: EmptyRequest) -> EmptyResponse:
         self.env_ready = False
-        self.env.reset(seed = self.env_seed)
+        self.env.reset(seed = self.env_seed, **self.reset_kwargs)
         self.eef_pc_msg = None
         self.scene_pc_msg = None
         self.env_ready = True
